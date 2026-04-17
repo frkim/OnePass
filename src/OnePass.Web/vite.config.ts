@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -45,6 +45,8 @@ export default defineConfig({
     proxy: {
       '/api': { target: 'http://localhost:5248', changeOrigin: true },
       '/health': { target: 'http://localhost:5248', changeOrigin: true },
+      '/scalar': { target: 'http://localhost:5248', changeOrigin: true },
+      '/swagger': { target: 'http://localhost:5248', changeOrigin: true },
     },
   },
   test: {

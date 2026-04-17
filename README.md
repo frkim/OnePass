@@ -8,7 +8,7 @@ This repository contains the full-stack initial implementation:
 
 | Layer          | Technology                                           |
 | -------------- | ---------------------------------------------------- |
-| Frontend       | React 18 + TypeScript + Vite, PWA, i18next (EN/FR)   |
+| Frontend       | React 19 + TypeScript 5.9 + Vite 6, PWA, i18next (EN/FR) |
 | Backend        | ASP.NET Core 8 Web API (C#), JWT auth, xUnit tests   |
 | Data           | Azure Table Storage (with in-memory fallback for dev)|
 | Identity       | Azure Managed Identity (User-Assigned) in production |
@@ -65,7 +65,7 @@ This repository contains the full-stack initial implementation:
 cd src/OnePass.Api
 dotnet run
 # API listens on http://localhost:5248
-# Swagger UI at http://localhost:5248/swagger
+# Scalar API docs at http://localhost:5248/scalar
 ```
 
 On first run in the `Development` environment the API seeds a local admin

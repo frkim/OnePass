@@ -29,7 +29,9 @@ public sealed class RetentionService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var interval = TimeSpan.FromHours(Math.Max(1, _opts.CheckIntervalHours));
-        while (!stoppingToken.IsCancellationRequested)
+        using var timer = new PeriodicTimer(interval);
+        // Run immediately on startup, then on each tick.
+        do
         {
             try
             {
@@ -39,13 +41,12 @@ public sealed class RetentionService : BackgroundService
                 if (archived > 0)
                     _logger.LogInformation("Retention sweep archived {Count} scans older than {Days} days", archived, _opts.RetentionDays);
             }
-            catch (OperationCanceledException) { break; }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Retention sweep failed");
             }
-            try { await Task.Delay(interval, stoppingToken); }
-            catch (OperationCanceledException) { break; }
         }
+        while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 }

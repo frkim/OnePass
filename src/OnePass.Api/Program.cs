@@ -7,6 +7,7 @@ using OnePass.Api.Auth;
 using OnePass.Api.Models;
 using OnePass.Api.Repositories;
 using OnePass.Api.Services;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,7 +83,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ---------- Controllers + Swagger ----------
+// ---------- Controllers + OpenAPI (Swashbuckle for spec + Scalar for UI) ----------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -123,7 +124,12 @@ if (app.Environment.IsDevelopment())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithTitle("OnePass API")
+            .WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json");
+    });
 }
 
 app.UseCors(CorsPolicy);

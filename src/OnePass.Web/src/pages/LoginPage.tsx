@@ -33,11 +33,11 @@ export default function LoginPage() {
         {error && <div className="alert error" role="alert">{error}</div>}
         <div className="field">
           <label htmlFor="u">{t('login.emailOrUsername')}</label>
-          <input id="u" value={emailOrUsername} onChange={e => setUser(e.target.value)} required autoFocus />
+          <input id="u" value={emailOrUsername} onChange={e => setUser(e.target.value)} required autoFocus autoComplete="username" />
         </div>
         <div className="field">
           <label htmlFor="p">{t('login.password')}</label>
-          <input id="p" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <input id="p" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
         </div>
         <button type="submit" disabled={busy} style={{ width: '100%' }}>
           {busy ? t('common.loading') : t('login.submit')}
