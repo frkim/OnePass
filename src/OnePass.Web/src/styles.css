@@ -67,6 +67,30 @@ label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 
 .app-header nav a.active, .app-header nav a:hover { background: #eef2ff; color: var(--brand); text-decoration: none; }
 .app-header .spacer { flex: 1; }
 
+.lang-select { position: relative; display: inline-block; }
+.lang-select-trigger {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 4px 6px; background: #fff; border: 1px solid #d1d5db;
+  border-radius: 6px; cursor: pointer; line-height: 0; color: var(--text);
+}
+.lang-select-trigger:hover { border-color: var(--brand); }
+.lang-select-trigger svg { display: block; border: 1px solid #e5e7eb; border-radius: 2px; }
+.lang-select-caret { font-size: 0.75rem; line-height: 1; color: var(--muted); }
+.lang-select-menu {
+  position: absolute; top: calc(100% + 4px); right: 0;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08); list-style: none;
+  margin: 0; padding: 4px; min-width: 160px; z-index: 50;
+}
+.lang-select-option {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%;
+  padding: 6px 8px; background: transparent; border: none; border-radius: 4px;
+  cursor: pointer; text-align: left; color: var(--text); font-size: 0.9rem;
+}
+.lang-select-option:hover { background: #f3f4f6; }
+.lang-select-option.active { background: #eef2ff; color: var(--brand); font-weight: 500; }
+.lang-select-option svg { border: 1px solid #e5e7eb; border-radius: 2px; }
+
 main.app-main { flex: 1; padding: 1.25rem; max-width: 1200px; width: 100%; margin: 0 auto; }
 
 .card {
@@ -92,6 +116,7 @@ th { color: var(--muted); font-weight: 600; }
 .alert.error { background: #fee2e2; color: #991b1b; }
 .alert.success { background: #dcfce7; color: #166534; }
 .alert.info { background: #e0e7ff; color: #3730a3; }
+.alert.warning { background: #fef3c7; color: #92400e; }
 
 .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 

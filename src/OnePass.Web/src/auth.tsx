@@ -9,7 +9,7 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-  login: (emailOrUsername: string, password: string) => Promise<void>;
+  login: (emailOrUsername: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => void;
 }
 
@@ -36,9 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const login = useCallback(async (emailOrUsername: string, password: string) => {
+  const login = useCallback(async (emailOrUsername: string, password: string, remember = true) => {
     const r = await api.login(emailOrUsername, password);
-    setToken(r.token);
+    setToken(r.token, remember);
     setState({ userId: r.userId, username: r.username, role: r.role, loading: false });
   }, []);
 

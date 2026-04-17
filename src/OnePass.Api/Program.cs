@@ -109,15 +109,32 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ---------- Dev seeding (creates a default Admin for local dev only) ----------
-if (app.Environment.IsDevelopment())
+// ---------- Seeding (creates a default Admin and a default Activity if none exist) ----------
 {
     using var scope = app.Services.CreateScope();
     var users = scope.ServiceProvider.GetRequiredService<IUserService>();
-    if (await users.FindByEmailOrUsernameAsync("admin@onepass.local") is null)
+    var admin = await users.FindByEmailOrUsernameAsync("admin@onepass.local");
+    if (admin is null)
     {
-        await users.CreateAsync("admin@onepass.local", "admin", "ChangeMe123!", Roles.Admin);
-        app.Logger.LogWarning("Development seed admin created: admin@onepass.local / ChangeMe123! — CHANGE BEFORE ANY PUBLIC USE.");
+        admin = await users.CreateAsync("admin@onepass.local", "admin", "Devoxx2026!", Roles.Admin);
+        app.Logger.LogWarning("Seed admin created: admin@onepass.local / Devoxx2026! — CHANGE BEFORE ANY PUBLIC USE.");
+    }
+
+    var activities = scope.ServiceProvider.GetRequiredService<IActivityService>();
+    if (await activities.FindByNameAsync("default") is null)
+    {
+        var now = DateTimeOffset.UtcNow;
+        await activities.CreateAsync(new OnePass.Api.Models.ActivityEntity
+        {
+            Name = "default",
+            Description = "Default activity",
+            StartsAt = now.AddDays(-1),
+            EndsAt = now.AddMonths(1),
+            MaxScansPerParticipant = -1, // unlimited
+            CreatedByUserId = admin.RowKey,
+            IsActive = true,
+        });
+        app.Logger.LogInformation("Seed default activity created (1 month, unlimited scans).");
     }
 }
 

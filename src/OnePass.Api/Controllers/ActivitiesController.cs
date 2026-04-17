@@ -52,13 +52,14 @@ public class ActivitiesController : ControllerBase
                 Description = req.Description,
                 StartsAt = req.StartsAt,
                 EndsAt = req.EndsAt,
-                MaxScansPerParticipant = Math.Max(1, req.MaxScansPerParticipant),
+                MaxScansPerParticipant = req.MaxScansPerParticipant <= 0 ? -1 : req.MaxScansPerParticipant,
                 CreatedByUserId = userId,
             };
             var created = await _activities.CreateAsync(entity, ct);
             return CreatedAtAction(nameof(Get), new { id = created.RowKey }, Map(created));
         }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
     }
 
     [HttpDelete("{id}")]
@@ -101,6 +102,10 @@ public class ActivitiesController : ControllerBase
             var userId = User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub) ?? "";
             var scan = await _scans.RecordScanAsync(id, req.ParticipantId, userId, ct);
             return Ok(new ScanResponse(scan.RowKey, scan.PartitionKey, scan.ParticipantId, scan.ScannedByUserId, scan.ScannedAt));
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_SCAN")
+        {
+            return Conflict(new { code = "duplicate", error = "Participant has already been scanned for this activity." });
         }
         catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
     }

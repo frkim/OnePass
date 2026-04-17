@@ -18,7 +18,20 @@
     "password": "Password",
     "submit": "Sign in",
     "invalid": "Invalid credentials",
-    "welcome": "Welcome back"
+    "welcome": "Welcome back",
+    "noAccount": "Don't have an account?",
+    "register": "Register",
+    "stayConnected": "Stay connected"
+  },
+  "register": {
+    "title": "Create an account",
+    "email": "Email",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Register",
+    "hasAccount": "Already have an account?",
+    "login": "Sign in",
+    "error": "Registration failed"
   },
   "dashboard": {
     "title": "Admin dashboard",
@@ -35,11 +48,15 @@
     "startsAt": "Starts",
     "endsAt": "Ends",
     "maxScans": "Max scans per participant",
+    "limitMaxScans": "Limit max scans per participant",
+    "unlimited": "Unlimited",
     "create": "Create activity",
     "participants": "Participants",
     "addParticipant": "Add participant",
     "displayName": "Display name",
-    "email": "Email (optional)"
+    "email": "Email (optional)",
+    "confirmCreate": "Create activity \"{{name}}\"?",
+    "duplicateName": "An activity with this name already exists."
   },
   "scan": {
     "title": "Scan participant",
@@ -48,7 +65,17 @@
     "submit": "Record scan",
     "success": "Scan recorded",
     "offlineQueued": "You are offline. Scan will sync when reconnected.",
-    "queued": "Pending scans: {{count}}"
+    "queued": "Pending scans: {{count}}",
+    "openCamera": "Scan with camera",
+    "closeCamera": "Close camera",
+    "cameraError": "Cannot access camera",
+    "cameraHint": "Point your camera at a QR code",
+    "duplicate": "This participant has already been scanned for this activity."
+  },
+  "admin": {
+    "reset": "Reset all data",
+    "resetConfirm": "This will permanently delete ALL activities, participants and scans. Continue?",
+    "resetSuccess": "Reset done: {{a}} activities, {{p}} participants, {{s}} scans deleted."
   },
   "users": {
     "title": "Users",

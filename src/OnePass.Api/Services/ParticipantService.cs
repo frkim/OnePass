@@ -8,6 +8,7 @@ public interface IParticipantService
     Task<ParticipantEntity> CreateAsync(string activityId, string displayName, string? email, CancellationToken ct = default);
     Task<ParticipantEntity?> GetAsync(string activityId, string participantId, CancellationToken ct = default);
     Task<IReadOnlyList<ParticipantEntity>> ListForActivityAsync(string activityId, CancellationToken ct = default);
+    Task UpsertAsync(ParticipantEntity participant, CancellationToken ct = default);
 }
 
 public sealed class ParticipantService : IParticipantService
@@ -37,6 +38,9 @@ public sealed class ParticipantService : IParticipantService
 
     public Task<ParticipantEntity?> GetAsync(string activityId, string participantId, CancellationToken ct = default) =>
         _participants.GetAsync(activityId, participantId, ct);
+
+    public Task UpsertAsync(ParticipantEntity participant, CancellationToken ct = default) =>
+        _participants.UpsertAsync(participant, ct);
 
     public async Task<IReadOnlyList<ParticipantEntity>> ListForActivityAsync(string activityId, CancellationToken ct = default)
     {

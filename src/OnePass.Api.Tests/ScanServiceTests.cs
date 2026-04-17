@@ -68,13 +68,17 @@ public class ScanServiceTests
     }
 
     [Fact]
-    public async Task Record_Scan_For_Unknown_Participant_Is_Rejected()
+    public async Task Record_Scan_For_Unknown_Participant_Auto_Registers()
     {
         var (activities, participants, scans) = BuildServices(out _);
         var (activity, _) = await SeedAsync(activities, participants);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await scans.RecordScanAsync(activity.RowKey, "does-not-exist", "u1"));
+        var scan = await scans.RecordScanAsync(activity.RowKey, "new-badge-id", "u1");
+        Assert.Equal("new-badge-id", scan.ParticipantId);
+
+        var registered = await participants.GetAsync(activity.RowKey, "new-badge-id");
+        Assert.NotNull(registered);
+        Assert.Equal("new-badge-id", registered!.DisplayName);
     }
 
     [Fact]

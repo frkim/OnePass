@@ -14,5 +14,5 @@ services:
     dist: dist
     hooks:
       prepackage:
-        shell: sh
-        run: npm install && npm run build
+        shell: pwsh
+        run: $env:VITE_API_URL = $env:SERVICE_API_ENDPOINT_URL; npm install; npm run build

@@ -6,6 +6,7 @@ import './i18n';
 import { AuthProvider } from './auth';
 import { AppLayout, RequireAdmin } from './AppLayout';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ActivitiesPage from './pages/ActivitiesPage';
 import ScanPage from './pages/ScanPage';
@@ -20,8 +21,10 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route element={<AppLayout />}>
-            <Route index element={<DashboardPage />} />
+            <Route index element={<ScanPage />} />
+            <Route path="dashboard" element={<RequireAdmin><DashboardPage /></RequireAdmin>} />
             <Route path="activities" element={<ActivitiesPage />} />
             <Route path="scan" element={<ScanPage />} />
             <Route path="users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />

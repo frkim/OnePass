@@ -12,7 +12,8 @@ export default function UsersPage() {
 
   async function onCreate(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
     try {
       await api.createUser({
         email: String(form.get('email') ?? ''),
@@ -20,7 +21,7 @@ export default function UsersPage() {
         password: String(form.get('password') ?? ''),
         role: String(form.get('role') ?? 'User'),
       });
-      e.currentTarget.reset();
+      formEl.reset();
       refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
@@ -31,6 +32,29 @@ export default function UsersPage() {
     <>
       <h1>{t('users.title')}</h1>
       {error && <div className="alert error">{error}</div>}
+
+      <div className="card" style={{ borderLeft: '4px solid #d32f2f' }}>
+        <h2>{t('admin.reset')}</h2>
+        <button
+          className="danger"
+          onClick={async () => {
+            if (!window.confirm(t('admin.resetConfirm'))) return;
+            try {
+              const r = await api.reset();
+              setError(null);
+              window.alert(t('admin.resetSuccess', {
+                a: r.activitiesDeleted,
+                p: r.participantsDeleted,
+                s: r.scansDeleted,
+              }));
+            } catch (err) {
+              setError(err instanceof Error ? err.message : t('common.error'));
+            }
+          }}
+        >
+          {t('admin.reset')}
+        </button>
+      </div>
 
       <form className="card" onSubmit={onCreate}>
         <h2>{t('users.create')}</h2>

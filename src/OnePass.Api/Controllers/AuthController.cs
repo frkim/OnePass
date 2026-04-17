@@ -35,6 +35,22 @@ public class AuthController : ControllerBase
         return new LoginResponse(token, user.RowKey, user.Username, user.Role, _opts.ExpirationMinutes);
     }
 
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<ActionResult<LoginResponse>> Register([FromBody] CreateUserRequest req, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
+            return BadRequest(new { error = "Email and password are required." });
+        try
+        {
+            var user = await _users.CreateAsync(req.Email, req.Username, req.Password, Roles.User, ct);
+            var token = _jwt.CreateToken(user);
+            return new LoginResponse(token, user.RowKey, user.Username, user.Role, _opts.ExpirationMinutes);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
+    }
+
     [HttpGet("me")]
     [Authorize]
     public ActionResult<object> Me()

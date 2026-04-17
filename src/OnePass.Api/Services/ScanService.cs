@@ -45,14 +45,24 @@ public sealed class ScanService : IScanService
         if (DateTimeOffset.UtcNow < activity.StartsAt || DateTimeOffset.UtcNow > activity.EndsAt)
             throw new InvalidOperationException("Activity is not currently running.");
 
-        var participant = await _participants.GetAsync(activityId, participantId, ct)
-                          ?? throw new InvalidOperationException("Participant not found for this activity.");
+        var participant = await _participants.GetAsync(activityId, participantId, ct);
+        if (participant is null)
+        {
+            // Auto-register participant on first scan using the badge id as the identifier.
+            participant = new ParticipantEntity
+            {
+                PartitionKey = activityId,
+                RowKey = participantId,
+                DisplayName = participantId,
+            };
+            await _participants.UpsertAsync(participant, ct);
+        }
 
-        // Enforce max scans per participant
+        // A participant can only be scanned once per activity. A second scan is rejected
+        // with the well-known marker DUPLICATE_SCAN so the controller returns a stable error code.
         var existing = await ListForActivityAsync(activityId, includeArchived: true, ct);
-        var scansForParticipant = existing.Count(s => s.ParticipantId == participant.RowKey);
-        if (scansForParticipant >= activity.MaxScansPerParticipant)
-            throw new InvalidOperationException("Maximum scans for this participant has been reached.");
+        if (existing.Any(s => s.ParticipantId == participant.RowKey))
+            throw new InvalidOperationException("DUPLICATE_SCAN");
 
         var now = DateTimeOffset.UtcNow;
         var scan = new ScanEntity

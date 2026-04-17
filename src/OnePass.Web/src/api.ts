@@ -1,11 +1,16 @@
 const TOKEN_KEY = 'onepass.token';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
 }
-export function setToken(t: string | null) {
-  if (t) localStorage.setItem(TOKEN_KEY, t);
-  else localStorage.removeItem(TOKEN_KEY);
+export function setToken(t: string | null, remember = true) {
+  // Always clear from both stores so callers don't end up with stale tokens.
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  if (t) {
+    (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, t);
+  }
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -13,14 +18,26 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   headers.set('Content-Type', 'application/json');
   const tok = getToken();
   if (tok) headers.set('Authorization', `Bearer ${tok}`);
-  const resp = await fetch(path, { ...init, headers });
+  const resp = await fetch(`${API_BASE}${path}`, { ...init, headers });
   if (resp.status === 401) {
     setToken(null);
     throw new Error('unauthorized');
   }
   if (!resp.ok) {
     const text = await resp.text();
-    throw new Error(text || `Request failed: ${resp.status}`);
+    let code: string | undefined;
+    let message = text;
+    try {
+      const body = JSON.parse(text);
+      if (body && typeof body === 'object') {
+        if (typeof body.code === 'string') code = body.code;
+        if (typeof body.error === 'string') message = body.error;
+      }
+    } catch { /* not JSON */ }
+    const err = new Error(message || `Request failed: ${resp.status}`) as Error & { code?: string; status?: number };
+    err.code = code;
+    err.status = resp.status;
+    throw err;
   }
   if (resp.status === 204) return undefined as unknown as T;
   const ct = resp.headers.get('content-type') || '';
@@ -84,6 +101,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ emailOrUsername, password }),
     }),
+  register: (email: string, username: string, password: string) =>
+    request<LoginResponse>('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, username, password, role: 'User' }),
+    }),
   me: () => request<{ id: string; username: string; role: string; language: string }>('/api/auth/me'),
 
   listActivities: () => request<Activity[]>('/api/activities'),
@@ -112,4 +134,10 @@ export const api = {
   createUser: (u: { email: string; username: string; password: string; role: string }) =>
     request<AppUser>('/api/users', { method: 'POST', body: JSON.stringify(u) }),
   deleteUser: (id: string) => request<void>(`/api/users/${id}`, { method: 'DELETE' }),
+
+  reset: () =>
+    request<{ activitiesDeleted: number; participantsDeleted: number; scansDeleted: number }>(
+      '/api/admin/reset',
+      { method: 'POST' },
+    ),
 };

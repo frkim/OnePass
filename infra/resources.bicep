@@ -102,7 +102,7 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: plan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|8.0'
+      linuxFxVersion: 'DOTNETCORE|10.0'
       alwaysOn: false
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
@@ -135,6 +135,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'NODE|20-lts'
+      appCommandLine: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
       alwaysOn: false
       minTlsVersion: '1.2'
       appSettings: [

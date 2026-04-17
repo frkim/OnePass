@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth';
 
 export default function LoginPage() {
@@ -9,6 +9,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [emailOrUsername, setUser] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -17,7 +18,7 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await login(emailOrUsername, password);
+      await login(emailOrUsername, password, remember);
       navigate('/');
     } catch {
       setError(t('login.invalid'));
@@ -39,9 +40,22 @@ export default function LoginPage() {
           <label htmlFor="p">{t('login.password')}</label>
           <input id="p" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
         </div>
+        <div className="field">
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={e => setRemember(e.target.checked)}
+            />
+            {t('login.stayConnected')}
+          </label>
+        </div>
         <button type="submit" disabled={busy} style={{ width: '100%' }}>
           {busy ? t('common.loading') : t('login.submit')}
         </button>
+        <p style={{ textAlign: 'center', marginTop: '1rem' }}>
+          {t('login.noAccount')} <Link to="/register">{t('login.register')}</Link>
+        </p>
       </form>
     </div>
   );

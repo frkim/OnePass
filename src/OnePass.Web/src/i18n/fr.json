@@ -18,7 +18,20 @@
     "password": "Mot de passe",
     "submit": "Se connecter",
     "invalid": "Identifiants invalides",
-    "welcome": "Bon retour"
+    "welcome": "Bon retour",
+    "noAccount": "Pas encore de compte ?",
+    "register": "S'inscrire",
+    "stayConnected": "Rester connecté"
+  },
+  "register": {
+    "title": "Créer un compte",
+    "email": "E-mail",
+    "username": "Identifiant",
+    "password": "Mot de passe",
+    "submit": "S'inscrire",
+    "hasAccount": "Déjà un compte ?",
+    "login": "Se connecter",
+    "error": "L'inscription a échoué"
   },
   "dashboard": {
     "title": "Tableau de bord administrateur",
@@ -35,11 +48,15 @@
     "startsAt": "Début",
     "endsAt": "Fin",
     "maxScans": "Scans max par participant",
+    "limitMaxScans": "Limiter les scans par participant",
+    "unlimited": "Illimité",
     "create": "Créer une activité",
     "participants": "Participants",
     "addParticipant": "Ajouter un participant",
     "displayName": "Nom affiché",
-    "email": "E-mail (facultatif)"
+    "email": "E-mail (facultatif)",
+    "confirmCreate": "Créer l'activité « {{name}} » ?",
+    "duplicateName": "Une activité avec ce nom existe déjà."
   },
   "scan": {
     "title": "Scanner un participant",
@@ -48,7 +65,17 @@
     "submit": "Enregistrer le scan",
     "success": "Scan enregistré",
     "offlineQueued": "Hors ligne. Le scan sera synchronisé à la reconnexion.",
-    "queued": "Scans en attente : {{count}}"
+    "queued": "Scans en attente : {{count}}",
+    "openCamera": "Scanner avec la caméra",
+    "closeCamera": "Fermer la caméra",
+    "cameraError": "Impossible d'accéder à la caméra",
+    "cameraHint": "Visez un code QR avec votre caméra",
+    "duplicate": "Ce participant a déjà été scanné pour cette activité."
+  },
+  "admin": {
+    "reset": "Réinitialiser les données",
+    "resetConfirm": "Ceci supprimera définitivement TOUTES les activités, participants et scans. Continuer ?",
+    "resetSuccess": "Réinitialisation effectuée : {{a}} activités, {{p}} participants, {{s}} scans supprimés."
   },
   "users": {
     "title": "Utilisateurs",
