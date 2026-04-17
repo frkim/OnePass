@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const SECONDS_PER_DAY = 60 * 60 * 24;
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -31,7 +33,7 @@ export default defineConfig({
             options: {
               cacheName: 'onepass-api',
               networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
+              expiration: { maxEntries: 200, maxAgeSeconds: SECONDS_PER_DAY },
             },
           },
         ],

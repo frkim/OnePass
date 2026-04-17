@@ -113,8 +113,11 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
         { name: 'AZURE_CLIENT_ID', value: apiIdentity.properties.clientId }
         { name: 'Jwt__Issuer', value: 'onepass' }
         { name: 'Jwt__Audience', value: 'onepass' }
-        // The signing key MUST be set out-of-band (e.g. Key Vault reference) before production use.
-        { name: 'Jwt__SigningKey', value: '' }
+        // NOTE: `Jwt__SigningKey` must be provided out-of-band (e.g. via a Key Vault
+        // reference App Setting: `@Microsoft.KeyVault(SecretUri=...)`). The API
+        // deliberately refuses to start in non-Development environments without it,
+        // and Bicep intentionally does *not* default it to an empty string to avoid
+        // accidental deployments without a signing key.
         { name: 'Retention__RetentionDays', value: '30' }
         { name: 'Cors__Origins__0', value: 'https://${webApp.properties.defaultHostName}' }
       ]

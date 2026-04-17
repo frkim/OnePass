@@ -1,1 +1,0 @@
-{"root":["./src/AppLayout.tsx","./src/api.ts","./src/auth.tsx","./src/main.tsx","./src/scanQueue.test.ts","./src/scanQueue.ts","./src/i18n/index.ts","./src/pages/ActivitiesPage.tsx","./src/pages/DashboardPage.tsx","./src/pages/LoginPage.tsx","./src/pages/ScanPage.tsx","./src/pages/UsersPage.tsx"],"version":"5.9.3"}

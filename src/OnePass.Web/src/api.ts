@@ -106,7 +106,7 @@ export const api = {
     }),
   listScans: (activityId: string) => request<Scan[]>(`/api/activities/${activityId}/scans`),
   stats: (activityId: string) => request<ActivityStats>(`/api/activities/${activityId}/stats`),
-  reportCsvUrl: (activityId: string) => `/api/activities/${activityId}/report.csv`,
+  reportCsvUrl: (activityId: string) => `/api/activities/${encodeURIComponent(activityId)}/report.csv`,
 
   listUsers: () => request<AppUser[]>('/api/users'),
   createUser: (u: { email: string; username: string; password: string; role: string }) =>
