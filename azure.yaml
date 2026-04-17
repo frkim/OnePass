@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: onepass
+metadata:
+  template: onepass@0.1.0
+services:
+  api:
+    project: src/OnePass.Api
+    language: dotnet
+    host: appservice
+  web:
+    project: src/OnePass.Web
+    language: ts
+    host: appservice
+    dist: dist
+    hooks:
+      prepackage:
+        shell: sh
+        run: npm install && npm run build
