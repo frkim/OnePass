@@ -1,0 +1,69 @@
+{
+  "app": {
+    "title": "OnePass",
+    "tagline": "Badge scanning & activity tracking",
+    "language": "Language"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "activities": "Activities",
+    "scan": "Scan",
+    "users": "Users",
+    "logout": "Sign out",
+    "login": "Sign in"
+  },
+  "login": {
+    "title": "Sign in to OnePass",
+    "emailOrUsername": "Email or username",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalid": "Invalid credentials",
+    "welcome": "Welcome back"
+  },
+  "dashboard": {
+    "title": "Admin dashboard",
+    "totalActivities": "Total activities",
+    "totalScans": "Total scans",
+    "uniqueParticipants": "Unique participants",
+    "scansOverTime": "Scans over time",
+    "exportCsv": "Export CSV",
+    "noData": "No data yet."
+  },
+  "activity": {
+    "name": "Name",
+    "description": "Description",
+    "startsAt": "Starts",
+    "endsAt": "Ends",
+    "maxScans": "Max scans per participant",
+    "create": "Create activity",
+    "participants": "Participants",
+    "addParticipant": "Add participant",
+    "displayName": "Display name",
+    "email": "Email (optional)"
+  },
+  "scan": {
+    "title": "Scan participant",
+    "chooseActivity": "Choose activity",
+    "participantId": "Participant ID (QR)",
+    "submit": "Record scan",
+    "success": "Scan recorded",
+    "offlineQueued": "You are offline. Scan will sync when reconnected.",
+    "queued": "Pending scans: {{count}}"
+  },
+  "users": {
+    "title": "Users",
+    "create": "Create user",
+    "email": "Email",
+    "username": "Username",
+    "password": "Password",
+    "role": "Role",
+    "delete": "Delete"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "required": "Required"
+  }
+}

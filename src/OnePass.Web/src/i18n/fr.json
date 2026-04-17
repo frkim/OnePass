@@ -1,0 +1,69 @@
+{
+  "app": {
+    "title": "OnePass",
+    "tagline": "Suivi d'activité par scan de badge",
+    "language": "Langue"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "activities": "Activités",
+    "scan": "Scanner",
+    "users": "Utilisateurs",
+    "logout": "Déconnexion",
+    "login": "Connexion"
+  },
+  "login": {
+    "title": "Connexion à OnePass",
+    "emailOrUsername": "E-mail ou identifiant",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "invalid": "Identifiants invalides",
+    "welcome": "Bon retour"
+  },
+  "dashboard": {
+    "title": "Tableau de bord administrateur",
+    "totalActivities": "Activités totales",
+    "totalScans": "Scans totaux",
+    "uniqueParticipants": "Participants uniques",
+    "scansOverTime": "Scans dans le temps",
+    "exportCsv": "Exporter CSV",
+    "noData": "Aucune donnée pour le moment."
+  },
+  "activity": {
+    "name": "Nom",
+    "description": "Description",
+    "startsAt": "Début",
+    "endsAt": "Fin",
+    "maxScans": "Scans max par participant",
+    "create": "Créer une activité",
+    "participants": "Participants",
+    "addParticipant": "Ajouter un participant",
+    "displayName": "Nom affiché",
+    "email": "E-mail (facultatif)"
+  },
+  "scan": {
+    "title": "Scanner un participant",
+    "chooseActivity": "Choisir une activité",
+    "participantId": "Identifiant participant (QR)",
+    "submit": "Enregistrer le scan",
+    "success": "Scan enregistré",
+    "offlineQueued": "Hors ligne. Le scan sera synchronisé à la reconnexion.",
+    "queued": "Scans en attente : {{count}}"
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "create": "Créer un utilisateur",
+    "email": "E-mail",
+    "username": "Identifiant",
+    "password": "Mot de passe",
+    "role": "Rôle",
+    "delete": "Supprimer"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue.",
+    "required": "Obligatoire"
+  }
+}
