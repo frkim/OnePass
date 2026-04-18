@@ -17,26 +17,38 @@ public class ActivitiesController : ControllerBase
     private readonly IActivityService _activities;
     private readonly IParticipantService _participants;
     private readonly IScanService _scans;
+    private readonly ISettingsService _settings;
+    private readonly Repositories.ITableStoreFactory _factory;
 
-    public ActivitiesController(IActivityService activities, IParticipantService participants, IScanService scans)
+    public ActivitiesController(
+        IActivityService activities,
+        IParticipantService participants,
+        IScanService scans,
+        ISettingsService settings,
+        Repositories.ITableStoreFactory factory)
     {
         _activities = activities;
         _participants = participants;
         _scans = scans;
+        _settings = settings;
+        _factory = factory;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActivityResponse>>> List(CancellationToken ct)
     {
         var list = await _activities.ListAsync(ct);
-        return Ok(list.Select(Map));
+        var settings = await _settings.GetAsync(ct);
+        return Ok(list.Select(a => Map(a, settings.DefaultActivityId)));
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ActivityResponse>> Get(string id, CancellationToken ct)
     {
         var a = await _activities.GetAsync(id, ct);
-        return a is null ? NotFound() : Map(a);
+        if (a is null) return NotFound();
+        var settings = await _settings.GetAsync(ct);
+        return Map(a, settings.DefaultActivityId);
     }
 
     [HttpPost]
@@ -56,7 +68,8 @@ public class ActivitiesController : ControllerBase
                 CreatedByUserId = userId,
             };
             var created = await _activities.CreateAsync(entity, ct);
-            return CreatedAtAction(nameof(Get), new { id = created.RowKey }, Map(created));
+            var settings = await _settings.GetAsync(ct);
+            return CreatedAtAction(nameof(Get), new { id = created.RowKey }, Map(created, settings.DefaultActivityId));
         }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
@@ -66,8 +79,58 @@ public class ActivitiesController : ControllerBase
     [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> Delete(string id, CancellationToken ct)
     {
-        await _activities.DeleteAsync(id, ct);
+        var existing = await _activities.ListAsync(ct);
+        if (existing.Count <= 1)
+            return Conflict(new { error = "At least one activity must always exist." });
+        await DeleteActivityCascadeAsync(id, ct);
+        // If the deleted activity was the global default, clear the setting.
+        var settings = await _settings.GetAsync(ct);
+        if (string.Equals(settings.DefaultActivityId, id, StringComparison.Ordinal))
+            await _settings.UpdateAsync(null, "", ct);
         return NoContent();
+    }
+
+    /// <summary>Deletes all participants and scans for the activity (the activity itself is preserved).</summary>
+    [HttpPost("{id}/reset")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> ResetScans(string id, CancellationToken ct)
+    {
+        var activity = await _activities.GetAsync(id, ct);
+        if (activity is null) return NotFound();
+
+        var scansRepo = _factory.GetRepository<ScanEntity>(ScanService.TableName);
+        var partsRepo = _factory.GetRepository<ParticipantEntity>(ParticipantService.TableName);
+
+        var deletedScans = 0;
+        await foreach (var s in scansRepo.QueryAsync(null, ct))
+        {
+            if (s.PartitionKey == id)
+            {
+                await scansRepo.DeleteAsync(s.PartitionKey, s.RowKey, ct);
+                deletedScans++;
+            }
+        }
+        var deletedParticipants = 0;
+        await foreach (var p in partsRepo.QueryAsync(null, ct))
+        {
+            if (p.PartitionKey == id)
+            {
+                await partsRepo.DeleteAsync(p.PartitionKey, p.RowKey, ct);
+                deletedParticipants++;
+            }
+        }
+        return Ok(new { participantsDeleted = deletedParticipants, scansDeleted = deletedScans });
+    }
+
+    private async Task DeleteActivityCascadeAsync(string id, CancellationToken ct)
+    {
+        var scansRepo = _factory.GetRepository<ScanEntity>(ScanService.TableName);
+        var partsRepo = _factory.GetRepository<ParticipantEntity>(ParticipantService.TableName);
+        await foreach (var s in scansRepo.QueryAsync(null, ct))
+            if (s.PartitionKey == id) await scansRepo.DeleteAsync(s.PartitionKey, s.RowKey, ct);
+        await foreach (var p in partsRepo.QueryAsync(null, ct))
+            if (p.PartitionKey == id) await partsRepo.DeleteAsync(p.PartitionKey, p.RowKey, ct);
+        await _activities.DeleteAsync(id, ct);
     }
 
     // ---- Participants ----
@@ -156,6 +219,7 @@ public class ActivitiesController : ControllerBase
         return needsQuote ? $"\"{v.Replace("\"", "\"\"")}\"" : v;
     }
 
-    private static ActivityResponse Map(ActivityEntity a) =>
-        new(a.RowKey, a.Name, a.Description, a.StartsAt, a.EndsAt, a.MaxScansPerParticipant, a.IsActive);
+    private static ActivityResponse Map(ActivityEntity a, string? globalDefaultId) =>
+        new(a.RowKey, a.Name, a.Description, a.StartsAt, a.EndsAt, a.MaxScansPerParticipant, a.IsActive,
+            string.Equals(a.RowKey, globalDefaultId, StringComparison.Ordinal));
 }

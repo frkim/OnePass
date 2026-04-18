@@ -21,4 +21,17 @@ public class UserEntity : IEntity
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public string PreferredLanguage { get; set; } = "en";
+
+    /// <summary>
+    /// Activity ids the user is allowed to select on the Scan page. An empty
+    /// list means no restriction (all activities are available). Admins are
+    /// implicitly allowed to access all activities regardless of this list.
+    /// </summary>
+    public List<string> AllowedActivityIds { get; set; } = new();
+
+    /// <summary>
+    /// User-chosen default activity id. Takes priority over the global default
+    /// when pre-selecting an activity on the Scan page.
+    /// </summary>
+    public string? DefaultActivityId { get; set; }
 }

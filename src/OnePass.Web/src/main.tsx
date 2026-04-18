@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage';
 import ActivitiesPage from './pages/ActivitiesPage';
 import ScanPage from './pages/ScanPage';
 import UsersPage from './pages/UsersPage';
+import ParametersPage from './pages/ParametersPage';
 import { installQueueFlushHandler } from './scanQueue';
 
 installQueueFlushHandler();
@@ -28,6 +29,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="activities" element={<ActivitiesPage />} />
             <Route path="scan" element={<ScanPage />} />
             <Route path="users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
+            <Route path="parameters" element={<ParametersPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

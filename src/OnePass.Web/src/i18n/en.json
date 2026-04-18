@@ -9,6 +9,7 @@
     "activities": "Activities",
     "scan": "Scan",
     "users": "Users",
+    "parameters": "Parameters",
     "logout": "Sign out",
     "login": "Sign in"
   },
@@ -56,7 +57,12 @@
     "displayName": "Display name",
     "email": "Email (optional)",
     "confirmCreate": "Create activity \"{{name}}\"?",
-    "duplicateName": "An activity with this name already exists."
+    "duplicateName": "An activity with this name already exists.",
+    "default": "Default",
+    "resetScans": "Reset scans",
+    "resetScansConfirm": "Delete all participants and scans for activity \"{{name}}\"?",
+    "resetScansSuccess": "Reset done: {{p}} participants, {{s}} scans deleted.",
+    "cannotDeleteLast": "At least one activity must always exist."
   },
   "scan": {
     "title": "Scan participant",
@@ -78,7 +84,7 @@
   },
   "admin": {
     "reset": "Reset all data",
-    "resetConfirm": "This will permanently delete ALL activities, participants and scans. Continue?",
+    "resetConfirm": "This will permanently delete ALL activities, participants and scans, and recreate an empty default activity. Continue?",
     "resetSuccess": "Reset done: {{a}} activities, {{p}} participants, {{s}} scans deleted."
   },
   "users": {
@@ -88,7 +94,25 @@
     "username": "Username",
     "password": "Password",
     "role": "Role",
-    "delete": "Delete"
+    "delete": "Delete",
+    "active": "Active",
+    "disabled": "Disabled",
+    "enable": "Enable",
+    "disable": "Disable",
+    "allowedActivities": "Allowed activities",
+    "defaultActivity": "Default activity",
+    "selectAtLeastOneActivity": "Select at least one activity"
+  },
+  "parameters": {
+    "title": "Parameters",
+    "eventName": "Event name",
+    "eventNameHelp": "Public-facing name shown across the application.",
+    "defaultActivity": "Default activity",
+    "defaultActivityHelp": "Pre-selected on the Scan page when a user has not chosen their own default.",
+    "myDefaultActivity": "My default activity",
+    "myDefaultActivityHelp": "Overrides the global default for your account.",
+    "saved": "Saved.",
+    "none": "None"
   },
   "common": {
     "save": "Save",
