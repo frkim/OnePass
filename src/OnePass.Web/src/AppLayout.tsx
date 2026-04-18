@@ -2,6 +2,7 @@ import { ReactElement, ReactNode, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './auth';
+import { api } from './api';
 
 // Inline SVG flags so they render consistently on every OS (Windows hides flag emojis).
 function FlagGB({ size = 20 }: { size?: number }) {
@@ -100,6 +101,12 @@ function LanguageSelect() {
 export function AppLayout() {
   const { t } = useTranslation();
   const { username, role, logout, loading } = useAuth();
+  const [eventName, setEventName] = useState<string>('');
+
+  useEffect(() => {
+    if (!username) return;
+    api.getSettings().then(s => setEventName(s.eventName ?? '')).catch(() => { /* ignore */ });
+  }, [username]);
 
   if (loading) return <div style={{ padding: '2rem' }}>{t('common.loading')}</div>;
   if (!username) return <Navigate to="/login" replace />;
@@ -111,11 +118,17 @@ export function AppLayout() {
           <img src="/favicon.svg" alt="" />
           <span>{t('app.title')}</span>
         </NavLink>
+        {eventName && (
+          <span style={{ color: 'var(--muted)', fontWeight: 600, fontSize: '0.95rem' }} title={t('parameters.eventName')}>
+            · {eventName}
+          </span>
+        )}
         <nav>
           <NavLink to="/" end>{t('nav.scan')}</NavLink>
           {role === 'Admin' && <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>}
           <NavLink to="/activities">{t('nav.activities')}</NavLink>
           {role === 'Admin' && <NavLink to="/users">{t('nav.users')}</NavLink>}
+          <NavLink to="/parameters">{t('nav.parameters')}</NavLink>
         </nav>
         <div className="spacer" />
         <LanguageSelect />

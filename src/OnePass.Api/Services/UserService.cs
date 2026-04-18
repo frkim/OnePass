@@ -8,7 +8,9 @@ public interface IUserService
     Task<UserEntity?> FindByEmailOrUsernameAsync(string emailOrUsername, CancellationToken ct = default);
     Task<UserEntity?> GetByIdAsync(string id, CancellationToken ct = default);
     Task<UserEntity> CreateAsync(string email, string username, string password, string role, CancellationToken ct = default);
+    Task<UserEntity> CreateAsync(string email, string username, string password, string role, IReadOnlyList<string>? allowedActivityIds, string? defaultActivityId, CancellationToken ct = default);
     Task<IReadOnlyList<UserEntity>> ListAsync(CancellationToken ct = default);
+    Task UpdateAsync(UserEntity user, CancellationToken ct = default);
     Task DeleteAsync(string id, CancellationToken ct = default);
     bool VerifyPassword(UserEntity user, string password);
 }
@@ -39,7 +41,10 @@ public sealed class UserService : IUserService
     public Task<UserEntity?> GetByIdAsync(string id, CancellationToken ct = default) =>
         _users.GetAsync("User", id, ct);
 
-    public async Task<UserEntity> CreateAsync(string email, string username, string password, string role, CancellationToken ct = default)
+    public Task<UserEntity> CreateAsync(string email, string username, string password, string role, CancellationToken ct = default) =>
+        CreateAsync(email, username, password, role, null, null, ct);
+
+    public async Task<UserEntity> CreateAsync(string email, string username, string password, string role, IReadOnlyList<string>? allowedActivityIds, string? defaultActivityId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email required", nameof(email));
         if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
@@ -56,9 +61,19 @@ public sealed class UserService : IUserService
             Username = string.IsNullOrWhiteSpace(username) ? email : username.Trim(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             Role = role,
+            AllowedActivityIds = allowedActivityIds is null
+                ? new List<string>()
+                : allowedActivityIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.Ordinal).ToList(),
+            DefaultActivityId = string.IsNullOrWhiteSpace(defaultActivityId) ? null : defaultActivityId.Trim(),
         };
         await _users.UpsertAsync(user, ct);
         return user;
+    }
+
+    public Task UpdateAsync(UserEntity user, CancellationToken ct = default)
+    {
+        user.PartitionKey = "User";
+        return _users.UpsertAsync(user, ct);
     }
 
     public async Task<IReadOnlyList<UserEntity>> ListAsync(CancellationToken ct = default)

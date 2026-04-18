@@ -96,7 +96,7 @@ export default function ActivitiesPage() {
             <div className="field"><label>{t('activity.startsAt')}</label><input name="startsAt" type="datetime-local" defaultValue={defaultStart} required /></div>
             <div className="field"><label>{t('activity.endsAt')}</label><input name="endsAt" type="datetime-local" defaultValue={defaultEnd} required /></div>
             <div className="field">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
                   <input
                     type="checkbox"
@@ -107,14 +107,16 @@ export default function ActivitiesPage() {
                   {t('activity.limitMaxScans')}
                 </label>
                 {limitScans ? (
-                  <input name="maxScans" type="number" min={1} defaultValue={100} aria-label={t('activity.maxScans')} style={{ width: '6rem' }} />
+                  <input name="maxScans" type="number" min={1} defaultValue={100} aria-label={t('activity.maxScans')} style={{ width: '6rem', marginLeft: '0.25rem' }} />
                 ) : (
                   <small style={{ color: 'var(--muted)' }}>{t('activity.unlimited')}</small>
                 )}
               </div>
             </div>
           </div>
-          <button type="submit">{t('common.save')}</button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="submit">{t('common.save')}</button>
+          </div>
         </form>
       )}
 
@@ -132,19 +134,57 @@ export default function ActivitiesPage() {
           <tbody>
             {list.map(a => (
               <tr key={a.id}>
-                <td><a onClick={() => toggleExpand(a.id)} style={{ cursor: 'pointer' }}>{a.name}</a></td>
+                <td>
+                  <a onClick={() => toggleExpand(a.id)} style={{ cursor: 'pointer' }}>{a.name}</a>
+                  {a.isDefault && (
+                    <span style={{
+                      marginLeft: '0.5rem',
+                      fontSize: '0.7rem',
+                      padding: '0.1rem 0.4rem',
+                      borderRadius: '999px',
+                      background: 'var(--brand)',
+                      color: '#fff',
+                    }}>{t('activity.default')}</span>
+                  )}
+                </td>
                 <td>{formatDate(a.startsAt, i18n.language)}</td>
                 <td>{formatDate(a.endsAt, i18n.language)}</td>
                 <td>{a.maxScansPerParticipant <= 0 ? t('activity.unlimited') : a.maxScansPerParticipant}</td>
                 <td>
                   {isAdmin && (
-                    <button className="danger" onClick={async () => {
-                      if (!window.confirm(`${t('users.delete')}: ${a.name}?`)) return;
-                      await api.deleteActivity(a.id);
-                      refresh();
-                    }}>
-                      {t('users.delete')}
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <button className="secondary" onClick={async () => {
+                        if (!window.confirm(t('activity.resetScansConfirm', { name: a.name }))) return;
+                        try {
+                          const r = await api.resetActivityScans(a.id);
+                          window.alert(t('activity.resetScansSuccess', { p: r.participantsDeleted, s: r.scansDeleted }));
+                          // Refresh the participants table for the expanded row, if any.
+                          if (expanded === a.id) {
+                            const p = await api.listParticipants(a.id);
+                            setParticipants(prev => ({ ...prev, [a.id]: p }));
+                          }
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : t('common.error'));
+                        }
+                      }}>
+                        {t('activity.resetScans')}
+                      </button>
+                      <button className="danger" onClick={async () => {
+                        if (list.length <= 1) {
+                          setError(t('activity.cannotDeleteLast'));
+                          return;
+                        }
+                        if (!window.confirm(`${t('users.delete')}: ${a.name}?`)) return;
+                        try {
+                          await api.deleteActivity(a.id);
+                          refresh();
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : t('common.error'));
+                        }
+                      }} disabled={list.length <= 1}>
+                        {t('users.delete')}
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

@@ -68,6 +68,7 @@ export interface Activity {
   endsAt: string;
   maxScansPerParticipant: number;
   isActive: boolean;
+  isDefault: boolean;
 }
 
 export interface Participant {
@@ -100,6 +101,22 @@ export interface AppUser {
   role: string;
   isActive: boolean;
   createdAt: string;
+  allowedActivityIds: string[];
+  defaultActivityId?: string | null;
+}
+
+export interface Settings {
+  eventName: string;
+  defaultActivityId?: string | null;
+}
+
+export interface Me {
+  id: string;
+  username: string;
+  role: string;
+  language: string;
+  allowedActivityIds: string[];
+  defaultActivityId?: string | null;
 }
 
 export const api = {
@@ -113,13 +130,23 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, username, password, role: 'User' }),
     }),
-  me: () => request<{ id: string; username: string; role: string; language: string }>('/api/auth/me'),
+  me: () => request<Me>('/api/auth/me'),
+  setMyDefaultActivity: (defaultActivityId: string | null) =>
+    request<{ defaultActivityId: string | null }>('/api/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ defaultActivityId }),
+    }),
   usernames: () => request<string[]>('/api/auth/usernames'),
 
   listActivities: () => request<Activity[]>('/api/activities'),
-  createActivity: (a: Omit<Activity, 'id' | 'isActive'>) =>
+  createActivity: (a: Omit<Activity, 'id' | 'isActive' | 'isDefault'>) =>
     request<Activity>('/api/activities', { method: 'POST', body: JSON.stringify(a) }),
   deleteActivity: (id: string) => request<void>(`/api/activities/${id}`, { method: 'DELETE' }),
+  resetActivityScans: (id: string) =>
+    request<{ participantsDeleted: number; scansDeleted: number }>(
+      `/api/activities/${id}/reset`,
+      { method: 'POST' },
+    ),
 
   listParticipants: (activityId: string) =>
     request<Participant[]>(`/api/activities/${activityId}/participants`),
@@ -139,12 +166,18 @@ export const api = {
   reportCsvUrl: (activityId: string) => `/api/activities/${encodeURIComponent(activityId)}/report.csv`,
 
   listUsers: () => request<AppUser[]>('/api/users'),
-  createUser: (u: { email: string; username: string; password: string; role: string }) =>
+  createUser: (u: { email: string; username: string; password: string; role: string; allowedActivityIds: string[]; defaultActivityId?: string }) =>
     request<AppUser>('/api/users', { method: 'POST', body: JSON.stringify(u) }),
+  updateUser: (id: string, patch: { isActive?: boolean; defaultActivityId?: string | null; allowedActivityIds?: string[] }) =>
+    request<AppUser>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   deleteUser: (id: string) => request<void>(`/api/users/${id}`, { method: 'DELETE' }),
 
+  getSettings: () => request<Settings>('/api/settings'),
+  updateSettings: (s: { eventName?: string | null; defaultActivityId?: string | null }) =>
+    request<Settings>('/api/settings', { method: 'PUT', body: JSON.stringify(s) }),
+
   reset: () =>
-    request<{ activitiesDeleted: number; participantsDeleted: number; scansDeleted: number }>(
+    request<{ activitiesDeleted: number; participantsDeleted: number; scansDeleted: number; defaultActivityId?: string }>(
       '/api/admin/reset',
       { method: 'POST' },
     ),

@@ -38,6 +38,7 @@ builder.Services.AddSingleton<IUserService, UserService>();
 builder.Services.AddSingleton<IActivityService, ActivityService>();
 builder.Services.AddSingleton<IParticipantService, ParticipantService>();
 builder.Services.AddSingleton<IScanService, ScanService>();
+builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
 // ---------- Retention ----------
 var retention = new RetentionOptions();
@@ -121,10 +122,11 @@ var app = builder.Build();
     }
 
     var activities = scope.ServiceProvider.GetRequiredService<IActivityService>();
-    if (await activities.FindByNameAsync("default") is null)
+    var defaultActivity = await activities.FindByNameAsync("default");
+    if (defaultActivity is null)
     {
         var now = DateTimeOffset.UtcNow;
-        await activities.CreateAsync(new OnePass.Api.Models.ActivityEntity
+        defaultActivity = await activities.CreateAsync(new OnePass.Api.Models.ActivityEntity
         {
             Name = "default",
             Description = "Default activity",
@@ -135,6 +137,13 @@ var app = builder.Build();
             IsActive = true,
         });
         app.Logger.LogInformation("Seed default activity created (1 month, unlimited scans).");
+    }
+
+    var settings = scope.ServiceProvider.GetRequiredService<ISettingsService>();
+    var current = await settings.GetAsync();
+    if (string.IsNullOrWhiteSpace(current.DefaultActivityId))
+    {
+        await settings.UpdateAsync(null, defaultActivity.RowKey);
     }
 }
 

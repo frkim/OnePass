@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OnePass.Api.Auth;
@@ -53,15 +54,39 @@ public class AuthController : ControllerBase
 
     [HttpGet("me")]
     [Authorize]
-    public ActionResult<object> Me()
+    public async Task<ActionResult<object>> Me(CancellationToken ct)
     {
+        var id = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+        var user = id is null ? null : await _users.GetByIdAsync(id, ct);
         return new
         {
-            id = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value,
+            id,
             username = User.Identity?.Name,
             role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
             language = User.FindFirst("lang")?.Value ?? "en",
+            allowedActivityIds = user?.AllowedActivityIds ?? new List<string>(),
+            defaultActivityId = user?.DefaultActivityId,
         };
+    }
+
+    [HttpPatch("me")]
+    [Authorize]
+    public async Task<ActionResult<object>> UpdateMe([FromBody] UpdateUserRequest req, CancellationToken ct)
+    {
+        var id = User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub);
+        if (string.IsNullOrEmpty(id)) return Unauthorized();
+        var user = await _users.GetByIdAsync(id, ct);
+        if (user is null) return Unauthorized();
+        // A regular user can only update their own default activity.
+        if (req.DefaultActivityId is not null)
+        {
+            var d = string.IsNullOrWhiteSpace(req.DefaultActivityId) ? null : req.DefaultActivityId.Trim();
+            if (d is not null && user.AllowedActivityIds.Count > 0 && !user.AllowedActivityIds.Contains(d, StringComparer.Ordinal))
+                return BadRequest(new { error = "Default activity must be one of the allowed activities." });
+            user.DefaultActivityId = d;
+            await _users.UpdateAsync(user, ct);
+        }
+        return new { defaultActivityId = user.DefaultActivityId };
     }
 
     /// <summary>
@@ -97,13 +122,47 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<UserResponse>> Create([FromBody] CreateUserRequest req, CancellationToken ct)
     {
+        if (req.AllowedActivityIds is null || req.AllowedActivityIds.Count == 0)
+            return BadRequest(new { error = "At least one allowed activity must be selected." });
+        var allowed = req.AllowedActivityIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.Ordinal).ToList();
+        if (allowed.Count == 0)
+            return BadRequest(new { error = "At least one allowed activity must be selected." });
+        var defaultId = string.IsNullOrWhiteSpace(req.DefaultActivityId) ? allowed[0] : req.DefaultActivityId!;
+        if (!allowed.Contains(defaultId, StringComparer.Ordinal))
+            return BadRequest(new { error = "Default activity must be one of the allowed activities." });
         try
         {
-            var user = await _users.CreateAsync(req.Email, req.Username, req.Password, req.Role, ct);
+            var user = await _users.CreateAsync(req.Email, req.Username, req.Password, req.Role, allowed, defaultId, ct);
             return CreatedAtAction(nameof(List), new { id = user.RowKey }, Map(user));
         }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<ActionResult<UserResponse>> Update(string id, [FromBody] UpdateUserRequest req, CancellationToken ct)
+    {
+        var user = await _users.GetByIdAsync(id, ct);
+        if (user is null) return NotFound();
+        if (req.IsActive.HasValue) user.IsActive = req.IsActive.Value;
+        if (req.AllowedActivityIds is not null)
+        {
+            var allowed = req.AllowedActivityIds.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.Ordinal).ToList();
+            if (allowed.Count == 0)
+                return BadRequest(new { error = "At least one allowed activity must be selected." });
+            user.AllowedActivityIds = allowed;
+            if (user.DefaultActivityId is not null && !allowed.Contains(user.DefaultActivityId, StringComparer.Ordinal))
+                user.DefaultActivityId = allowed[0];
+        }
+        if (req.DefaultActivityId is not null)
+        {
+            var d = string.IsNullOrWhiteSpace(req.DefaultActivityId) ? null : req.DefaultActivityId.Trim();
+            if (d is not null && user.AllowedActivityIds.Count > 0 && !user.AllowedActivityIds.Contains(d, StringComparer.Ordinal))
+                return BadRequest(new { error = "Default activity must be one of the allowed activities." });
+            user.DefaultActivityId = d;
+        }
+        await _users.UpdateAsync(user, ct);
+        return Map(user);
     }
 
     [HttpDelete("{id}")]
@@ -114,5 +173,5 @@ public class UsersController : ControllerBase
     }
 
     private static UserResponse Map(UserEntity u) =>
-        new(u.RowKey, u.Email, u.Username, u.Role, u.IsActive, u.CreatedAt);
+        new(u.RowKey, u.Email, u.Username, u.Role, u.IsActive, u.CreatedAt, u.AllowedActivityIds, u.DefaultActivityId);
 }

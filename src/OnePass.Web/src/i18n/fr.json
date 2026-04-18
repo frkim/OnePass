@@ -9,6 +9,7 @@
     "activities": "Activités",
     "scan": "Scanner",
     "users": "Utilisateurs",
+    "parameters": "Paramètres",
     "logout": "Déconnexion",
     "login": "Connexion"
   },
@@ -56,7 +57,12 @@
     "displayName": "Nom affiché",
     "email": "E-mail (facultatif)",
     "confirmCreate": "Créer l'activité « {{name}} » ?",
-    "duplicateName": "Une activité avec ce nom existe déjà."
+    "duplicateName": "Une activité avec ce nom existe déjà.",
+    "default": "Par défaut",
+    "resetScans": "Réinitialiser les scans",
+    "resetScansConfirm": "Supprimer tous les participants et scans de l'activité « {{name}} » ?",
+    "resetScansSuccess": "Réinitialisation effectuée : {{p}} participants, {{s}} scans supprimés.",
+    "cannotDeleteLast": "Au moins une activité doit toujours exister."
   },
   "scan": {
     "title": "Scanner un participant",
@@ -77,8 +83,8 @@
     "detailsScannedAt": "Scanné à"
   },
   "admin": {
-    "reset": "Réinitialiser les données",
-    "resetConfirm": "Ceci supprimera définitivement TOUTES les activités, participants et scans. Continuer ?",
+    "reset": "Réinitialiser toutes les données",
+    "resetConfirm": "Ceci supprimera définitivement TOUTES les activités, participants et scans, et recréera une activité par défaut vide. Continuer ?",
     "resetSuccess": "Réinitialisation effectuée : {{a}} activités, {{p}} participants, {{s}} scans supprimés."
   },
   "users": {
@@ -88,7 +94,25 @@
     "username": "Identifiant",
     "password": "Mot de passe",
     "role": "Rôle",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "active": "Actif",
+    "disabled": "Désactivé",
+    "enable": "Activer",
+    "disable": "Désactiver",
+    "allowedActivities": "Activités autorisées",
+    "defaultActivity": "Activité par défaut",
+    "selectAtLeastOneActivity": "Sélectionnez au moins une activité"
+  },
+  "parameters": {
+    "title": "Paramètres",
+    "eventName": "Nom de l'événement",
+    "eventNameHelp": "Nom public affiché dans toute l'application.",
+    "defaultActivity": "Activité par défaut",
+    "defaultActivityHelp": "Pré-sélectionnée sur la page Scanner si l'utilisateur n'a pas choisi son propre défaut.",
+    "myDefaultActivity": "Mon activité par défaut",
+    "myDefaultActivityHelp": "Remplace le défaut global pour votre compte.",
+    "saved": "Enregistré.",
+    "none": "Aucune"
   },
   "common": {
     "save": "Enregistrer",
