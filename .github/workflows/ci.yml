@@ -99,6 +99,11 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Development
           ASPNETCORE_URLS: http://localhost:5248
+          # Phase 0 of the SaaS migration removed the hardcoded seed admin
+          # password. Pin it here so the Playwright suite (which uses the
+          # well-known E2E_ADMIN_PASSWORD default) can sign in.
+          Bootstrap__SeedDefaultAdmin: 'true'
+          Bootstrap__DefaultAdminPassword: 'Devoxx2026!'
         run: |
           nohup dotnet run --project src/OnePass.Api/OnePass.Api.csproj -p:SkipSpaBuild=true --configuration Release > api.log 2>&1 &
           echo "Waiting for API to become ready..."
