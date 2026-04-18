@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth';
+import { LanguageSelect } from '../LanguageSelect';
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -33,6 +34,8 @@ export default function LoginPage() {
         <div className="login-header">
           <img src="/favicon.svg" alt="" className="login-logo" />
           <h2>{t('login.title')}</h2>
+          <div style={{ flex: 1 }} />
+          <LanguageSelect />
         </div>
         {error && <div className="alert error" role="alert">{error}</div>}
         <div className="field">
