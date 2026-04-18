@@ -170,10 +170,6 @@ export default function ActivitiesPage() {
                         {t('activity.resetScans')}
                       </button>
                       <button className="danger" onClick={async () => {
-                        if (list.length <= 1) {
-                          setError(t('activity.cannotDeleteLast'));
-                          return;
-                        }
                         if (!window.confirm(`${t('users.delete')}: ${a.name}?`)) return;
                         try {
                           await api.deleteActivity(a.id);
@@ -181,7 +177,7 @@ export default function ActivitiesPage() {
                         } catch (err) {
                           setError(err instanceof Error ? err.message : t('common.error'));
                         }
-                      }} disabled={list.length <= 1}>
+                      }} disabled={list.length <= 1} title={list.length <= 1 ? t('activity.cannotDeleteLast') : undefined}>
                         {t('users.delete')}
                       </button>
                     </div>
