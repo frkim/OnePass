@@ -126,7 +126,7 @@ public class OrganizationsController : ControllerBase
             }
             await _audit.LogAsync(org.RowKey, userId, AuditActions.OrganizationCreate, "Organization", org.RowKey,
                 new { org.Name, org.Slug }, HttpContext.Connection.RemoteIpAddress?.ToString(),
-                Request.Headers.UserAgent.ToString(), ct);
+                Request.Headers.UserAgent.FirstOrDefault(), ct);
             return CreatedAtAction(nameof(Get), new { orgId = org.RowKey }, Map(org));
         }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }

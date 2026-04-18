@@ -251,9 +251,12 @@ var app = builder.Build();
 
 static string GenerateStrongPassword()
 {
+    // Suffix guarantees the password meets common complexity rules
+    // (digit + lower + upper + special) regardless of the random body.
+    const string ComplexitySuffix = "!1Aa";
     Span<byte> buf = stackalloc byte[24];
     RandomNumberGenerator.Fill(buf);
-    return Convert.ToBase64String(buf).TrimEnd('=').Replace('+', '-').Replace('/', '_') + "!1Aa";
+    return Convert.ToBase64String(buf).TrimEnd('=').Replace('+', '-').Replace('/', '_') + ComplexitySuffix;
 }
 
 if (app.Environment.IsDevelopment())

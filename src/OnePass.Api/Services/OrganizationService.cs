@@ -32,6 +32,9 @@ public sealed class OrganizationService : IOrganizationService
         "memberships", "invitations", "orgs", "organisations", "organizations", "me",
     };
 
+    // Slug grammar: 1–40 chars, lowercase alphanumerics + internal dashes,
+    // no leading/trailing dash. Pattern reads: single char, OR (start char +
+    // 0–38 inner chars including dashes + end char).
     private static readonly Regex SlugRegex = new("^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$", RegexOptions.Compiled);
 
     private readonly ITableRepository<OrganizationEntity> _repo;

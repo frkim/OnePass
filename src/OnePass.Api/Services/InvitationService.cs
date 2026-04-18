@@ -17,6 +17,8 @@ public interface IInvitationService
 public sealed class InvitationService : IInvitationService
 {
     internal const string TableName = "invitations";
+    /// <summary>Default invitation lifetime when the caller doesn't override.</summary>
+    public static readonly TimeSpan DefaultInvitationTtl = TimeSpan.FromDays(14);
     private readonly ITableRepository<InvitationEntity> _repo;
 
     public InvitationService(ITableStoreFactory factory)
@@ -38,7 +40,7 @@ public sealed class InvitationService : IInvitationService
             Email = email.Trim().ToLowerInvariant(),
             Role = role,
             InvitedByUserId = invitedByUserId,
-            ExpiresAt = DateTimeOffset.UtcNow + (ttl ?? TimeSpan.FromDays(14)),
+            ExpiresAt = DateTimeOffset.UtcNow + (ttl ?? DefaultInvitationTtl),
         };
         await _repo.UpsertAsync(inv, ct);
         return inv;

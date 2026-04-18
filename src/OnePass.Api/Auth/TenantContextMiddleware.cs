@@ -20,6 +20,14 @@ namespace OnePass.Api.Auth;
 public sealed class TenantContextMiddleware
 {
     public const string OrgHeader = "X-OnePass-Org";
+    /// <summary>
+    /// JWT claim that carries the active org id when the token is enriched
+    /// by Entra External ID's Custom Authentication Extension (Phase 2).
+    /// Kept as a short, unnamespaced name to match the CAE token-enrichment
+    /// convention; the middleware also accepts the <see cref="OrgHeader"/>
+    /// header which takes precedence so the SPA can override the claim.
+    /// </summary>
+    public const string OrgClaim = "org_id";
     private readonly RequestDelegate _next;
 
     public TenantContextMiddleware(RequestDelegate next) => _next = next;
@@ -37,7 +45,7 @@ public sealed class TenantContextMiddleware
             if (!string.IsNullOrWhiteSpace(userId))
             {
                 var headerOrg = ctx.Request.Headers[OrgHeader].ToString();
-                var claimOrg = ctx.User.FindFirstValue("org_id");
+                var claimOrg = ctx.User.FindFirstValue(OrgClaim);
                 string? candidate = !string.IsNullOrWhiteSpace(headerOrg) ? headerOrg
                                   : !string.IsNullOrWhiteSpace(claimOrg) ? claimOrg
                                   : null;
