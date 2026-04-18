@@ -96,19 +96,22 @@ export default function ActivitiesPage() {
             <div className="field"><label>{t('activity.startsAt')}</label><input name="startsAt" type="datetime-local" defaultValue={defaultStart} required /></div>
             <div className="field"><label>{t('activity.endsAt')}</label><input name="endsAt" type="datetime-local" defaultValue={defaultEnd} required /></div>
             <div className="field">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={limitScans}
-                  onChange={e => setLimitScans(e.target.checked)}
-                />
-                {t('activity.limitMaxScans')}
-              </label>
-              {limitScans ? (
-                <input name="maxScans" type="number" min={1} defaultValue={100} aria-label={t('activity.maxScans')} />
-              ) : (
-                <small style={{ color: 'var(--muted)' }}>{t('activity.unlimited')}</small>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={limitScans}
+                    onChange={e => setLimitScans(e.target.checked)}
+                    style={{ width: 'auto', margin: 0 }}
+                  />
+                  {t('activity.limitMaxScans')}
+                </label>
+                {limitScans ? (
+                  <input name="maxScans" type="number" min={1} defaultValue={100} aria-label={t('activity.maxScans')} style={{ width: '6rem' }} />
+                ) : (
+                  <small style={{ color: 'var(--muted)' }}>{t('activity.unlimited')}</small>
+                )}
+              </div>
             </div>
           </div>
           <button type="submit">{t('common.save')}</button>

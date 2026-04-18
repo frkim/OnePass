@@ -27,16 +27,23 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const text = await resp.text();
     let code: string | undefined;
     let message = text;
+    let previousScannedAt: string | undefined;
     try {
       const body = JSON.parse(text);
       if (body && typeof body === 'object') {
         if (typeof body.code === 'string') code = body.code;
         if (typeof body.error === 'string') message = body.error;
+        if (typeof body.previousScannedAt === 'string') previousScannedAt = body.previousScannedAt;
       }
     } catch { /* not JSON */ }
-    const err = new Error(message || `Request failed: ${resp.status}`) as Error & { code?: string; status?: number };
+    const err = new Error(message || `Request failed: ${resp.status}`) as Error & {
+      code?: string;
+      status?: number;
+      previousScannedAt?: string;
+    };
     err.code = code;
     err.status = resp.status;
+    err.previousScannedAt = previousScannedAt;
     throw err;
   }
   if (resp.status === 204) return undefined as unknown as T;
@@ -107,6 +114,7 @@ export const api = {
       body: JSON.stringify({ email, username, password, role: 'User' }),
     }),
   me: () => request<{ id: string; username: string; role: string; language: string }>('/api/auth/me'),
+  usernames: () => request<string[]>('/api/auth/usernames'),
 
   listActivities: () => request<Activity[]>('/api/activities'),
   createActivity: (a: Omit<Activity, 'id' | 'isActive'>) =>

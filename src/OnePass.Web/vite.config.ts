@@ -49,6 +49,12 @@ export default defineConfig({
       '/swagger': { target: 'http://localhost:5248', changeOrigin: true },
     },
   },
+  // Output the built SPA into the API's wwwroot so a single App Service can
+  // serve both the API and the front-end on the same origin.
+  build: {
+    outDir: '../OnePass.Api/wwwroot',
+    emptyOutDir: true,
+  },
   test: {
     globals: true,
     environment: 'jsdom',

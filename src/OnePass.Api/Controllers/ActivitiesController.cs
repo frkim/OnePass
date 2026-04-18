@@ -103,9 +103,14 @@ public class ActivitiesController : ControllerBase
             var scan = await _scans.RecordScanAsync(id, req.ParticipantId, userId, ct);
             return Ok(new ScanResponse(scan.RowKey, scan.PartitionKey, scan.ParticipantId, scan.ScannedByUserId, scan.ScannedAt));
         }
-        catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_SCAN")
+        catch (DuplicateScanException ex)
         {
-            return Conflict(new { code = "duplicate", error = "Participant has already been scanned for this activity." });
+            return Conflict(new
+            {
+                code = "duplicate",
+                error = "Participant has already been scanned for this activity.",
+                previousScannedAt = ex.PreviousScannedAt,
+            });
         }
         catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
     }

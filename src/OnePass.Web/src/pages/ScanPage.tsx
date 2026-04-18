@@ -31,7 +31,11 @@ export default function ScanPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [activityId, setActivityId] = useState('');
   const [participantId, setParticipantId] = useState('');
-  const [message, setMessage] = useState<{ type: 'success' | 'info' | 'warning' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'info' | 'warning' | 'error';
+    text: string;
+    details?: { badgeId: string; activityName: string; scannedAt: string };
+  } | null>(null);
   const [queued, setQueued] = useState(pendingCount());
   const [cameraOn, setCameraOn] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -61,16 +65,30 @@ export default function ScanPage() {
     const badgeId = extractBadgeId(pid);
     try {
       const res = await scanOrQueue(activityId, badgeId);
-      setMessage({
-        type: res === 'sent' ? 'success' : 'info',
-        text: res === 'sent' ? t('scan.success') : t('scan.offlineQueued'),
-      });
+      if (res.status === 'sent') {
+        const activityName = activities.find(a => a.id === activityId)?.name ?? activityId;
+        setMessage({
+          type: 'success',
+          text: t('scan.success'),
+          details: {
+            badgeId,
+            activityName,
+            scannedAt: res.scan.scannedAt,
+          },
+        });
+      } else {
+        setMessage({ type: 'info', text: t('scan.offlineQueued') });
+      }
       setParticipantId('');
       setQueued(pendingCount());
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === 'duplicate') {
-        setMessage({ type: 'warning', text: t('scan.duplicate') });
+        const prev = (err as { previousScannedAt?: string }).previousScannedAt;
+        const text = prev
+          ? t('scan.duplicateAt', { when: new Date(prev).toLocaleString() })
+          : t('scan.duplicate');
+        setMessage({ type: 'warning', text });
         setParticipantId('');
         return;
       }
@@ -115,10 +133,41 @@ export default function ScanPage() {
   return (
     <>
       <h1>{t('scan.title')}</h1>
-      {message && <div className={`alert ${message.type}`}>{message.text}</div>}
+      {message && (
+        <div className={`alert ${message.type}`}>
+          <div>{message.text}</div>
+          {message.details && (
+            <dl className="scan-details">
+              <dt>{t('scan.detailsBadgeId')}</dt>
+              <dd><code>{message.details.badgeId}</code></dd>
+              <dt>{t('scan.detailsActivity')}</dt>
+              <dd>{message.details.activityName}</dd>
+              <dt>{t('scan.detailsScannedAt')}</dt>
+              <dd>{new Date(message.details.scannedAt).toLocaleString()}</dd>
+            </dl>
+          )}
+        </div>
+      )}
       {queued > 0 && <div className="alert info">{t('scan.queued', { count: queued })}</div>}
 
       <form className="card" onSubmit={onSubmit}>
+        <div className="scan-actions">
+          {!cameraOn ? (
+            <button type="button" className="scan-action-btn" onClick={startCamera} title={t('scan.openCamera')} aria-label={t('scan.openCamera')}>
+              <span className="scan-action-icon" aria-hidden="true">📷</span>
+              <span className="scan-action-label">{t('scan.openCamera')}</span>
+            </button>
+          ) : (
+            <button type="button" className="scan-action-btn danger" onClick={stopCamera} title={t('scan.closeCamera')} aria-label={t('scan.closeCamera')}>
+              <span className="scan-action-icon" aria-hidden="true">✖</span>
+              <span className="scan-action-label">{t('scan.closeCamera')}</span>
+            </button>
+          )}
+          <button type="submit" className="scan-action-btn" title={t('scan.submit')} aria-label={t('scan.submit')}>
+            <span className="scan-action-icon" aria-hidden="true">✓</span>
+            <span className="scan-action-label">{t('scan.submit')}</span>
+          </button>
+        </div>
         <div className="field">
           <label htmlFor="act">{t('scan.chooseActivity')}</label>
           <select id="act" value={activityId} onChange={e => setActivityId(e.target.value)}>
@@ -128,18 +177,6 @@ export default function ScanPage() {
         <div className="field">
           <label htmlFor="pid">{t('scan.participantId')}</label>
           <input id="pid" value={participantId} onChange={e => setParticipantId(e.target.value)} required autoFocus />
-        </div>
-        <div className="row" style={{ gap: '0.5rem' }}>
-          <button type="submit">{t('scan.submit')}</button>
-          {!cameraOn ? (
-            <button type="button" onClick={startCamera}>
-              {t('scan.openCamera')}
-            </button>
-          ) : (
-            <button type="button" className="danger" onClick={stopCamera}>
-              {t('scan.closeCamera')}
-            </button>
-          )}
         </div>
       </form>
 

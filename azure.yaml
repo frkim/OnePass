@@ -1,18 +1,11 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 name: onepass
 metadata:
-  template: onepass@0.1.0
+  template: onepass@0.2.0
 services:
-  api:
+  app:
     project: src/OnePass.Api
     language: dotnet
     host: appservice
-  web:
-    project: src/OnePass.Web
-    language: ts
-    host: appservice
-    dist: dist
-    hooks:
-      prepackage:
-        shell: pwsh
-        run: $env:VITE_API_URL = $env:SERVICE_API_ENDPOINT_URL; npm install; npm run build
+    # The API project's MSBuild also runs `npm run build` (defined in OnePass.Api.csproj)
+    # which writes the SPA into src/OnePass.Api/wwwroot, so a single publish bundles both.

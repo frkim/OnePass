@@ -47,7 +47,7 @@ public class AdminController : ControllerBase
     }
 
     private static async Task<int> DeleteAllAsync<T>(ITableRepository<T> repo, CancellationToken ct)
-        where T : class, Azure.Data.Tables.ITableEntity, new()
+        where T : class, OnePass.Api.Models.IEntity, new()
     {
         var keys = new List<(string pk, string rk)>();
         await foreach (var e in repo.QueryAsync(null, ct))

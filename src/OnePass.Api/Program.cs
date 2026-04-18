@@ -33,7 +33,7 @@ builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
 // ---------- Data ----------
-builder.Services.AddSingleton<ITableStoreFactory, AzureTableStoreFactory>();
+builder.Services.AddSingleton<ITableStoreFactory, CosmosTableStoreFactory>();
 builder.Services.AddSingleton<IUserService, UserService>();
 builder.Services.AddSingleton<IActivityService, ActivityService>();
 builder.Services.AddSingleton<IParticipantService, ParticipantService>();
@@ -149,11 +149,19 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// Serve the bundled SPA (built into wwwroot during publish) on the same origin.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseCors(CorsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", time = DateTimeOffset.UtcNow }));
+
+// Anything that isn't an API/health/swagger route falls back to index.html so
+// client-side react-router can handle the URL (deep links, refresh, etc.).
+app.MapFallbackToFile("index.html");
 
 app.Run();
 

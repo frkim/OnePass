@@ -12,6 +12,20 @@ public record ActivityStats(
 
 public record ScanBucket(DateOnly Day, int Count);
 
+/// <summary>
+/// Thrown when a participant attempts to scan for an activity they have already been scanned for.
+/// Carries the timestamp of the original (previous) scan so callers can surface it to the user.
+/// </summary>
+public sealed class DuplicateScanException : InvalidOperationException
+{
+    public DateTimeOffset PreviousScannedAt { get; }
+    public DuplicateScanException(DateTimeOffset previousScannedAt)
+        : base("DUPLICATE_SCAN")
+    {
+        PreviousScannedAt = previousScannedAt;
+    }
+}
+
 public interface IScanService
 {
     /// <summary>Records a scan and returns the persisted entity, or throws if invalid.</summary>
@@ -59,10 +73,12 @@ public sealed class ScanService : IScanService
         }
 
         // A participant can only be scanned once per activity. A second scan is rejected
-        // with the well-known marker DUPLICATE_SCAN so the controller returns a stable error code.
+        // with a DuplicateScanException carrying the previous scan timestamp so the
+        // controller (and ultimately the UI) can show when the participant was first scanned.
         var existing = await ListForActivityAsync(activityId, includeArchived: true, ct);
-        if (existing.Any(s => s.ParticipantId == participant.RowKey))
-            throw new InvalidOperationException("DUPLICATE_SCAN");
+        var previous = existing.FirstOrDefault(s => s.ParticipantId == participant.RowKey);
+        if (previous is not null)
+            throw new DuplicateScanException(previous.ScannedAt);
 
         var now = DateTimeOffset.UtcNow;
         var scan = new ScanEntity

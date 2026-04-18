@@ -62,7 +62,7 @@
     "title": "Scan participant",
     "chooseActivity": "Choose activity",
     "participantId": "Participant ID (QR)",
-    "submit": "Record scan",
+    "submit": "Record Scan Manually",
     "success": "Scan recorded",
     "offlineQueued": "You are offline. Scan will sync when reconnected.",
     "queued": "Pending scans: {{count}}",
@@ -70,7 +70,11 @@
     "closeCamera": "Close camera",
     "cameraError": "Cannot access camera",
     "cameraHint": "Point your camera at a QR code",
-    "duplicate": "This participant has already been scanned for this activity."
+    "duplicate": "This participant has already been scanned for this activity.",
+    "duplicateAt": "This participant has already been scanned for this activity on {{when}}.",
+    "detailsBadgeId": "Badge ID",
+    "detailsActivity": "Activity",
+    "detailsScannedAt": "Scanned at"
   },
   "admin": {
     "reset": "Reset all data",

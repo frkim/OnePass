@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
-using Azure.Data.Tables;
+using System.Runtime.CompilerServices;
+using OnePass.Api.Models;
 
 namespace OnePass.Api.Repositories;
 
@@ -11,18 +12,17 @@ public sealed class InMemoryTableStoreFactory : ITableStoreFactory
 {
     private readonly ConcurrentDictionary<string, object> _tables = new();
 
-    public ITableRepository<T> GetRepository<T>(string tableName) where T : class, ITableEntity, new()
+    public ITableRepository<T> GetRepository<T>(string tableName) where T : class, IEntity, new()
     {
         return (ITableRepository<T>)_tables.GetOrAdd(tableName, _ => new InMemoryTableRepository<T>());
     }
 
-    private sealed class InMemoryTableRepository<T> : ITableRepository<T> where T : class, ITableEntity, new()
+    private sealed class InMemoryTableRepository<T> : ITableRepository<T> where T : class, IEntity, new()
     {
         private readonly ConcurrentDictionary<(string pk, string rk), T> _rows = new();
 
         public Task UpsertAsync(T entity, CancellationToken ct = default)
         {
-            entity.Timestamp ??= DateTimeOffset.UtcNow;
             _rows[(entity.PartitionKey, entity.RowKey)] = entity;
             return Task.CompletedTask;
         }
@@ -39,9 +39,9 @@ public sealed class InMemoryTableStoreFactory : ITableStoreFactory
             return Task.CompletedTask;
         }
 
-        public async IAsyncEnumerable<T> QueryAsync(string? filter = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+        public async IAsyncEnumerable<T> QueryAsync(string? filter = null, [EnumeratorCancellation] CancellationToken ct = default)
         {
-            // The in-memory repo ignores the OData filter; callers perform filtering in services.
+            // Filter is intentionally ignored; service code applies its own predicates.
             foreach (var v in _rows.Values)
             {
                 ct.ThrowIfCancellationRequested();

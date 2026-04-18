@@ -1,5 +1,4 @@
-using Azure;
-using Azure.Data.Tables;
+using System.Text.Json.Serialization;
 
 namespace OnePass.Api.Models;
 
@@ -7,12 +6,13 @@ namespace OnePass.Api.Models;
 /// Authenticated user (Admin or User). Participants are a separate entity
 /// and do not require authentication.
 /// </summary>
-public class UserEntity : ITableEntity
+public class UserEntity : IEntity
 {
+    [JsonPropertyName("partitionKey")]
     public string PartitionKey { get; set; } = "User";
+
+    [JsonPropertyName("id")]
     public string RowKey { get; set; } = Guid.NewGuid().ToString("N");
-    public DateTimeOffset? Timestamp { get; set; }
-    public ETag ETag { get; set; }
 
     public string Email { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
