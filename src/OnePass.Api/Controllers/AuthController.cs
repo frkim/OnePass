@@ -90,17 +90,11 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Returns the list of usernames for autocomplete on the login page.
-    /// NOTE: anonymous endpoint — exposes account identifiers and aids enumeration.
-    /// Disable for any non-demo deployment.
+    /// Account-enumeration endpoint <c>GET /api/auth/usernames</c> was removed
+    /// as part of the SaaS migration's Phase 0 hardening (OWASP A07).
+    /// The login UI now requires the user to type their own email/username.
     /// </summary>
-    [HttpGet("usernames")]
-    [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<string>>> Usernames(CancellationToken ct)
-    {
-        var list = await _users.ListAsync(ct);
-        return Ok(list.Where(u => u.IsActive).Select(u => u.Username).OrderBy(n => n));
-    }
+    // (intentionally removed — see docs/saas-migration-plan.md §Phase 0)
 }
 
 [ApiController]

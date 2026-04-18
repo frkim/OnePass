@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OnePass.Api.Auth;
@@ -39,6 +40,12 @@ builder.Services.AddSingleton<IActivityService, ActivityService>();
 builder.Services.AddSingleton<IParticipantService, ParticipantService>();
 builder.Services.AddSingleton<IScanService, ScanService>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
+// SaaS services (Phase 1)
+builder.Services.AddSingleton<IOrganizationService, OrganizationService>();
+builder.Services.AddSingleton<IMembershipService, MembershipService>();
+builder.Services.AddSingleton<IEventService, EventService>();
+builder.Services.AddSingleton<IInvitationService, InvitationService>();
+builder.Services.AddSingleton<IAuditService, AuditService>();
 
 // ---------- Retention ----------
 var retention = new RetentionOptions();
@@ -67,7 +74,24 @@ builder.Services
             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(TenantPolicies.OrgMember, p => p.RequireAuthenticatedUser()
+        .AddRequirements(new OrgRoleRequirement(OrgRoles.All, acceptLegacyAdmin: true)));
+    options.AddPolicy(TenantPolicies.OrgAdmin, p => p.RequireAuthenticatedUser()
+        .AddRequirements(new OrgRoleRequirement(OrgRoles.OrgAdminOrAbove, acceptLegacyAdmin: true)));
+    options.AddPolicy(TenantPolicies.OrgOwner, p => p.RequireAuthenticatedUser()
+        .AddRequirements(new OrgRoleRequirement(new[] { OrgRoles.OrgOwner }, acceptLegacyAdmin: true)));
+    options.AddPolicy(TenantPolicies.CanManageEvents, p => p.RequireAuthenticatedUser()
+        .AddRequirements(new OrgRoleRequirement(OrgRoles.CanManageEvents, acceptLegacyAdmin: true)));
+    options.AddPolicy(TenantPolicies.CanScan, p => p.RequireAuthenticatedUser()
+        .AddRequirements(new OrgRoleRequirement(OrgRoles.CanScan, acceptLegacyAdmin: true)));
+    options.AddPolicy(TenantPolicies.PlatformAdmin, p => p.RequireAuthenticatedUser()
+        .AddRequirements(new OrgRoleRequirement(new[] { OrgRoles.PlatformAdmin }, acceptLegacyAdmin: true)));
+});
+// Tenant scope is per-request, populated by TenantContextMiddleware.
+builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<IAuthorizationHandler, OrgRoleHandler>();
 
 // ---------- CORS ----------
 const string CorsPolicy = "OnePassFrontend";
@@ -110,18 +134,84 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ---------- Seeding (creates a default Admin and a default Activity if none exist) ----------
+// ---------- Seeding ----------
+// Phase 0 hardening: the legacy seed admin (admin@onepass.local / Devoxx2026!)
+// is now strictly opt-in via Bootstrap:SeedDefaultAdmin. Production deployments
+// MUST leave this off and provision the first owner via the bootstrap script
+// (see docs/saas-migration-plan.md §Phase 0).
 {
     using var scope = app.Services.CreateScope();
+    var seedDefaultAdmin = builder.Configuration.GetValue<bool?>("Bootstrap:SeedDefaultAdmin")
+                           ?? app.Environment.IsDevelopment();
+
     var users = scope.ServiceProvider.GetRequiredService<IUserService>();
-    var admin = await users.FindByEmailOrUsernameAsync("admin@onepass.local");
-    if (admin is null)
+    var orgs = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
+    var memberships = scope.ServiceProvider.GetRequiredService<IMembershipService>();
+    var events = scope.ServiceProvider.GetRequiredService<IEventService>();
+    var activities = scope.ServiceProvider.GetRequiredService<IActivityService>();
+    var settings = scope.ServiceProvider.GetRequiredService<ISettingsService>();
+
+    UserEntity? admin = null;
+    if (seedDefaultAdmin)
     {
-        admin = await users.CreateAsync("admin@onepass.local", "admin", "Devoxx2026!", Roles.Admin);
-        app.Logger.LogWarning("Seed admin created: admin@onepass.local / Devoxx2026! — CHANGE BEFORE ANY PUBLIC USE.");
+        admin = await users.FindByEmailOrUsernameAsync("admin@onepass.local");
+        if (admin is null)
+        {
+            // Use the configured password if provided; otherwise generate a strong
+            // random one and write it to logs once. Hardcoded "Devoxx2026!" is
+            // gone — it was a known credential and a production footgun.
+            var seedPassword = builder.Configuration["Bootstrap:DefaultAdminPassword"];
+            var generated = string.IsNullOrWhiteSpace(seedPassword);
+            if (generated) seedPassword = GenerateStrongPassword();
+            admin = await users.CreateAsync("admin@onepass.local", "admin", seedPassword!, Roles.Admin);
+            if (generated)
+                app.Logger.LogWarning(
+                    "Seed admin created: admin@onepass.local / {Password} — store this credential and CHANGE IT before any public use. " +
+                    "To skip seeding, set Bootstrap:SeedDefaultAdmin=false.",
+                    seedPassword);
+            else
+                app.Logger.LogWarning(
+                    "Seed admin created with configured password (Bootstrap:DefaultAdminPassword). CHANGE IT before any public use.");
+        }
     }
 
-    var activities = scope.ServiceProvider.GetRequiredService<IActivityService>();
+    // Bootstrap the "default" SaaS organisation that wraps any pre-existing
+    // single-tenant data so the legacy controllers keep functioning during
+    // the migration. New installations also get one default org so the SPA
+    // always has somewhere to land.
+    var defaultOrg = await orgs.GetBySlugAsync("default");
+    if (defaultOrg is null)
+    {
+        var ownerId = admin?.RowKey ?? "system";
+        defaultOrg = await orgs.CreateAsync("Default Organization", "default", ownerId);
+        app.Logger.LogInformation("Default organisation created (slug=default, id={OrgId}).", defaultOrg.RowKey);
+    }
+    if (admin is not null)
+    {
+        var existingMembership = await memberships.GetAsync(defaultOrg.RowKey, admin.RowKey);
+        if (existingMembership is null)
+            await memberships.AddAsync(defaultOrg.RowKey, admin.RowKey, OrgRoles.OrgOwner);
+        if (string.IsNullOrEmpty(admin.DefaultOrgId))
+        {
+            admin.DefaultOrgId = defaultOrg.RowKey;
+            await users.UpdateAsync(admin);
+        }
+    }
+
+    var orgEvents = await events.ListForOrgAsync(defaultOrg.RowKey);
+    EventEntity defaultEvent;
+    if (orgEvents.Count == 0)
+    {
+        defaultEvent = await events.CreateAsync(defaultOrg.RowKey, "Default event", "default",
+            admin?.RowKey ?? "system");
+        app.Logger.LogInformation("Default event created (orgId={OrgId}, eventId={EventId}).",
+            defaultOrg.RowKey, defaultEvent.RowKey);
+    }
+    else
+    {
+        defaultEvent = orgEvents[0];
+    }
+
     var defaultActivity = await activities.FindByNameAsync("default");
     if (defaultActivity is null)
     {
@@ -133,18 +223,37 @@ var app = builder.Build();
             StartsAt = now.AddDays(-1),
             EndsAt = now.AddMonths(1),
             MaxScansPerParticipant = -1, // unlimited
-            CreatedByUserId = admin.RowKey,
+            CreatedByUserId = admin?.RowKey ?? "system",
             IsActive = true,
+            OrgId = defaultOrg.RowKey,
+            EventId = defaultEvent.RowKey,
         });
         app.Logger.LogInformation("Seed default activity created (1 month, unlimited scans).");
     }
+    else if (string.IsNullOrEmpty(defaultActivity.OrgId))
+    {
+        // Legacy default activity exists from a pre-SaaS install — annotate it.
+        defaultActivity.OrgId = defaultOrg.RowKey;
+        defaultActivity.EventId = defaultEvent.RowKey;
+        await activities.UpdateAsync(defaultActivity);
+    }
 
-    var settings = scope.ServiceProvider.GetRequiredService<ISettingsService>();
+    if (defaultEvent.DefaultActivityId is null)
+    {
+        defaultEvent.DefaultActivityId = defaultActivity.RowKey;
+        await events.UpdateAsync(defaultEvent);
+    }
+
     var current = await settings.GetAsync();
     if (string.IsNullOrWhiteSpace(current.DefaultActivityId))
-    {
         await settings.UpdateAsync(null, defaultActivity.RowKey);
-    }
+}
+
+static string GenerateStrongPassword()
+{
+    Span<byte> buf = stackalloc byte[24];
+    RandomNumberGenerator.Fill(buf);
+    return Convert.ToBase64String(buf).TrimEnd('=').Replace('+', '-').Replace('/', '_') + "!1Aa";
 }
 
 if (app.Environment.IsDevelopment())
@@ -164,6 +273,7 @@ app.UseStaticFiles();
 
 app.UseCors(CorsPolicy);
 app.UseAuthentication();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", time = DateTimeOffset.UtcNow }));

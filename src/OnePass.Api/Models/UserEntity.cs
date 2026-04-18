@@ -34,4 +34,36 @@ public class UserEntity : IEntity
     /// when pre-selecting an activity on the Scan page.
     /// </summary>
     public string? DefaultActivityId { get; set; }
+
+    // ---- SaaS additions (Phase 1) ----
+
+    /// <summary>
+    /// Cross-org default organisation. Used by the SPA to auto-select the
+    /// active org on login. Null means "no preference — pick the first".
+    /// </summary>
+    public string? DefaultOrgId { get; set; }
+
+    /// <summary>
+    /// Federated identities linked to this user (provider id + subject).
+    /// Empty for users created via the legacy local-password flow.
+    /// </summary>
+    public List<ExternalIdentity> ExternalIdentities { get; set; } = new();
+
+    /// <summary>UI locale preference (BCP 47).</summary>
+    public string Locale { get; set; } = "en";
+
+    /// <summary>
+    /// Platform-level lock (set by <c>PlatformAdmin</c> for abuse handling).
+    /// Distinct from <see cref="IsActive"/>, which is a legacy global flag,
+    /// and from per-org <see cref="MembershipEntity.Status"/>.
+    /// </summary>
+    public bool IsLocked { get; set; }
+}
+
+/// <summary>A federated identity link from a CIAM provider.</summary>
+public class ExternalIdentity
+{
+    public string Provider { get; set; } = string.Empty; // "google", "github", "msa", ...
+    public string Subject { get; set; } = string.Empty;  // OIDC sub
+    public string? Email { get; set; }
 }
