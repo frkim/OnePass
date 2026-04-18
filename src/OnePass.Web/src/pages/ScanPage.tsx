@@ -42,10 +42,20 @@ export default function ScanPage() {
   const scannerRef = useRef<QrScanner | null>(null);
 
   useEffect(() => {
-    api.listActivities().then(list => {
-      setActivities(list);
-      if (list[0]) setActivityId(list[0].id);
-    });
+    (async () => {
+      const [list, me] = await Promise.all([api.listActivities(), api.me().catch(() => null)]);
+      // If the user has an explicit allowed list, restrict choices to it.
+      const allowed = me?.allowedActivityIds && me.allowedActivityIds.length > 0
+        ? new Set(me.allowedActivityIds)
+        : null;
+      const visible = allowed ? list.filter(a => allowed.has(a.id)) : list;
+      setActivities(visible);
+      // User default takes priority over the admin/global default.
+      const userDefault = me?.defaultActivityId && visible.find(a => a.id === me.defaultActivityId);
+      const adminDefault = visible.find(a => a.isDefault);
+      const initial = userDefault ?? adminDefault ?? visible[0];
+      if (initial) setActivityId(initial.id);
+    })();
     const h = () => setQueued(pendingCount());
     const onlineHandler = async () => { await flushQueue(); setQueued(pendingCount()); };
     window.addEventListener('online', onlineHandler);
