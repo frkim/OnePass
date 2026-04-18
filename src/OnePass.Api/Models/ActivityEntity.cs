@@ -25,4 +25,10 @@ public class ActivityEntity : IEntity
     public bool IsDefault { get; set; }
     public string CreatedByUserId { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    // ---- SaaS additions (Phase 1) ----
+    /// <summary>Owning organisation. Empty string for legacy single-tenant rows.</summary>
+    public string OrgId { get; set; } = string.Empty;
+    /// <summary>Owning event. Empty string for legacy single-tenant rows.</summary>
+    public string EventId { get; set; } = string.Empty;
 }

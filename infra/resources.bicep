@@ -72,10 +72,19 @@ resource cosmosDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15
 }
 
 var containerNames = [
+  // Legacy single-tenant containers (preserved for backwards compatibility
+  // during the SaaS migration — see docs/saas-migration-plan.md).
   'users'
   'activities'
   'participants'
   'scans'
+  'settings'
+  // SaaS multi-tenant containers (Phase 1).
+  'organizations'
+  'memberships'
+  'events'
+  'invitations'
+  'audit_events'
 ]
 
 resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = [for name in containerNames: {

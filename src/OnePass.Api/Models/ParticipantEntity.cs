@@ -17,4 +17,8 @@ public class ParticipantEntity : IEntity
     public string DisplayName { get; set; } = string.Empty;
     public string? Email { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    // ---- SaaS additions (Phase 1) ----
+    public string OrgId { get; set; } = string.Empty;
+    public string EventId { get; set; } = string.Empty;
 }
