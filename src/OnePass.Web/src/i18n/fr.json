@@ -62,7 +62,7 @@
     "title": "Scanner un participant",
     "chooseActivity": "Choisir une activité",
     "participantId": "Identifiant participant (QR)",
-    "submit": "Enregistrer le scan",
+    "submit": "Enregistrer le scan manuellement",
     "success": "Scan enregistré",
     "offlineQueued": "Hors ligne. Le scan sera synchronisé à la reconnexion.",
     "queued": "Scans en attente : {{count}}",
@@ -70,7 +70,11 @@
     "closeCamera": "Fermer la caméra",
     "cameraError": "Impossible d'accéder à la caméra",
     "cameraHint": "Visez un code QR avec votre caméra",
-    "duplicate": "Ce participant a déjà été scanné pour cette activité."
+    "duplicate": "Ce participant a déjà été scanné pour cette activité.",
+    "duplicateAt": "Ce participant a déjà été scanné pour cette activité le {{when}}.",
+    "detailsBadgeId": "ID du badge",
+    "detailsActivity": "Activité",
+    "detailsScannedAt": "Scanné à"
   },
   "admin": {
     "reset": "Réinitialiser les données",

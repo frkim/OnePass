@@ -51,7 +51,7 @@ public class ScanServiceTests
         var (activity, participant) = await SeedAsync(activities, participants, maxScans: 1);
 
         await scans.RecordScanAsync(activity.RowKey, participant.RowKey, "u1");
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsAsync<DuplicateScanException>(async () =>
             await scans.RecordScanAsync(activity.RowKey, participant.RowKey, "u1"));
     }
 

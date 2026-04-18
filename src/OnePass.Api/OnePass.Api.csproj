@@ -8,12 +8,31 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Data.Tables" Version="12.11.0" />
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.*" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.55.0" />
+    <!-- Newtonsoft.Json is required by Microsoft.Azure.Cosmos even when using the System.Text.Json serializer. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.14.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
+
+  <!--
+    Bundle the React SPA into wwwroot during `dotnet publish` so a single
+    App Service can serve the API and the front-end on the same origin.
+    Skipped on plain `dotnet build` / `dotnet test` to keep local iteration fast.
+    Force the build locally with: `dotnet publish -p:BuildSpa=true`.
+  -->
+  <PropertyGroup>
+    <SpaSourceDir>$(MSBuildThisFileDirectory)..\OnePass.Web</SpaSourceDir>
+    <SpaOutputDir>$(MSBuildThisFileDirectory)wwwroot\</SpaOutputDir>
+  </PropertyGroup>
+
+  <Target Name="BuildSpa" BeforeTargets="Publish" Condition="'$(SkipSpaBuild)' != 'true' And Exists('$(SpaSourceDir)\package.json')">
+    <Message Importance="high" Text="Building SPA from $(SpaSourceDir) into $(SpaOutputDir)" />
+    <Exec Command="npm ci" WorkingDirectory="$(SpaSourceDir)" Condition="!Exists('$(SpaSourceDir)\node_modules')" />
+    <Exec Command="npm run build" WorkingDirectory="$(SpaSourceDir)" />
+  </Target>
 
 </Project>

@@ -63,6 +63,19 @@ public class AuthController : ControllerBase
             language = User.FindFirst("lang")?.Value ?? "en",
         };
     }
+
+    /// <summary>
+    /// Returns the list of usernames for autocomplete on the login page.
+    /// NOTE: anonymous endpoint — exposes account identifiers and aids enumeration.
+    /// Disable for any non-demo deployment.
+    /// </summary>
+    [HttpGet("usernames")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<string>>> Usernames(CancellationToken ct)
+    {
+        var list = await _users.ListAsync(ct);
+        return Ok(list.Where(u => u.IsActive).Select(u => u.Username).OrderBy(n => n));
+    }
 }
 
 [ApiController]

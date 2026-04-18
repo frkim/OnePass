@@ -11,14 +11,14 @@ describe('scanQueue', () => {
   it('queues when navigator is offline', async () => {
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
     const res = await scanOrQueue('a1', 'p1');
-    expect(res).toBe('queued');
+    expect(res.status).toBe('queued');
     expect(pendingCount()).toBe(1);
   });
 
   it('queues when fetch throws a network error while online', async () => {
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
     const res = await scanOrQueue('a1', 'p1');
-    expect(res).toBe('queued');
+    expect(res.status).toBe('queued');
     expect(pendingCount()).toBe(1);
   });
 

@@ -107,10 +107,10 @@ export function AppLayout() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="brand">
+        <NavLink to="/" className="brand" aria-label={t('nav.scan')}>
           <img src="/favicon.svg" alt="" />
           <span>{t('app.title')}</span>
-        </div>
+        </NavLink>
         <nav>
           <NavLink to="/" end>{t('nav.scan')}</NavLink>
           {role === 'Admin' && <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>}
