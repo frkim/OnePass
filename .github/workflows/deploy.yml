@@ -43,6 +43,15 @@ jobs:
       - name: Install Azure Developer CLI
         uses: Azure/setup-azd@v2
 
+      - name: Build SPA bundle into wwwroot
+        # Pre-build the SPA so the implicit `Content` glob in OnePass.Api.csproj
+        # picks up wwwroot files at publish time. Avoids needing the MSBuild
+        # `BuildSpa` target on the runner during `azd up`.
+        working-directory: src/OnePass.Web
+        run: |
+          npm ci
+          npm run build
+
       - name: Azure login (OIDC)
         run: |
           azd auth login \
