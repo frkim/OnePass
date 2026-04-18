@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './styles.css';
 import './i18n';
 import { AuthProvider } from './auth';
+import { OrgProvider } from './org';
 import { AppLayout, RequireAdmin } from './AppLayout';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -19,20 +20,22 @@ installQueueFlushHandler();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route element={<AppLayout />}>
-            <Route index element={<ScanPage />} />
-            <Route path="dashboard" element={<RequireAdmin><DashboardPage /></RequireAdmin>} />
-            <Route path="activities" element={<ActivitiesPage />} />
-            <Route path="scan" element={<ScanPage />} />
-            <Route path="users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
-            <Route path="parameters" element={<ParametersPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <OrgProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route element={<AppLayout />}>
+              <Route index element={<ScanPage />} />
+              <Route path="dashboard" element={<RequireAdmin><DashboardPage /></RequireAdmin>} />
+              <Route path="activities" element={<ActivitiesPage />} />
+              <Route path="scan" element={<ScanPage />} />
+              <Route path="users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
+              <Route path="parameters" element={<ParametersPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </OrgProvider>
     </AuthProvider>
   </StrictMode>,
 );

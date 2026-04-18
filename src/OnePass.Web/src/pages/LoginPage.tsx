@@ -1,8 +1,7 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth';
-import { api } from '../api';
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -13,11 +12,6 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [usernames, setUsernames] = useState<string[]>([]);
-
-  useEffect(() => {
-    api.usernames().then(setUsernames).catch(() => setUsernames([]));
-  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -45,16 +39,12 @@ export default function LoginPage() {
           <label htmlFor="u">{t('login.emailOrUsername')}</label>
           <input
             id="u"
-            list="login-usernames"
             value={emailOrUsername}
             onChange={e => setUser(e.target.value)}
             required
             autoFocus
             autoComplete="username"
           />
-          <datalist id="login-usernames">
-            {usernames.map(u => <option key={u} value={u} />)}
-          </datalist>
         </div>
         <div className="field">
           <label htmlFor="p">{t('login.password')}</label>
