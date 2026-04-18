@@ -286,10 +286,4 @@ export const api = {
   getSettings: () => request<Settings>('/api/settings'),
   updateSettings: (s: { eventName?: string | null; defaultActivityId?: string | null }) =>
     request<Settings>('/api/settings', { method: 'PUT', body: JSON.stringify(s) }),
-
-  reset: () =>
-    request<{ activitiesDeleted: number; participantsDeleted: number; scansDeleted: number; defaultActivityId?: string }>(
-      '/api/admin/reset',
-      { method: 'POST' },
-    ),
 };

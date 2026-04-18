@@ -82,11 +82,6 @@
     "detailsActivity": "Activity",
     "detailsScannedAt": "Scanned at"
   },
-  "admin": {
-    "reset": "Reset all data",
-    "resetConfirm": "This will permanently delete ALL activities, participants and scans, and recreate an empty default activity. Continue?",
-    "resetSuccess": "Reset done: {{a}} activities, {{p}} participants, {{s}} scans deleted."
-  },
   "users": {
     "title": "Users",
     "create": "Create user",

@@ -207,7 +207,6 @@ A smoke test at the end of the deploy job probes the new App Service's
 | `/api/activities/{id}/scans`            | GET    | user    | List scans                                   |
 | `/api/activities/{id}/stats`            | GET    | Admin   | Aggregated analytics                         |
 | `/api/activities/{id}/report.csv`       | GET    | Admin   | CSV export                                   |
-| `/api/admin/reset`                      | POST   | Admin   | Delete all event data                        |
 
 ## License
 
