@@ -82,11 +82,6 @@
     "detailsActivity": "Activité",
     "detailsScannedAt": "Scanné à"
   },
-  "admin": {
-    "reset": "Réinitialiser toutes les données",
-    "resetConfirm": "Ceci supprimera définitivement TOUTES les activités, participants et scans, et recréera une activité par défaut vide. Continuer ?",
-    "resetSuccess": "Réinitialisation effectuée : {{a}} activités, {{p}} participants, {{s}} scans supprimés."
-  },
   "users": {
     "title": "Utilisateurs",
     "create": "Créer un utilisateur",

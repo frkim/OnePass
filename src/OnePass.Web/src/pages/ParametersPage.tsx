@@ -5,8 +5,9 @@ import { useAuth } from '../auth';
 
 /**
  * Admin "Parameters" page. Hosts the global Event Name, the global default
- * activity, the per-user default activity, and the destructive "Reset all
- * data" action that used to live on the Users page.
+ * activity, and the per-user default activity. The legacy "Reset all data"
+ * action has been removed — it was a global, cross-tenant destructive
+ * endpoint (see docs/saas-migration-plan.md §Phase 3).
  */
 export default function ParametersPage() {
   const { t } = useTranslation();
@@ -53,25 +54,6 @@ export default function ParametersPage() {
     try {
       await api.setMyDefaultActivity(myDefault || null);
       setInfo(t('parameters.saved'));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
-    }
-  }
-
-  async function onReset() {
-    if (!window.confirm(t('admin.resetConfirm'))) return;
-    setError(null); setInfo(null);
-    try {
-      const r = await api.reset();
-      const a = await api.listActivities();
-      setActivities(a);
-      const s = await api.getSettings();
-      setSettings(s);
-      window.alert(t('admin.resetSuccess', {
-        a: r.activitiesDeleted,
-        p: r.participantsDeleted,
-        s: r.scansDeleted,
-      }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
     }
@@ -128,13 +110,6 @@ export default function ParametersPage() {
           <button type="submit">{t('common.save')}</button>
         </div>
       </form>
-
-      {isAdmin && (
-        <div className="card" style={{ borderLeft: '4px solid #d32f2f' }}>
-          <h2>{t('admin.reset')}</h2>
-          <button className="danger" onClick={onReset}>{t('admin.reset')}</button>
-        </div>
-      )}
     </>
   );
 }
