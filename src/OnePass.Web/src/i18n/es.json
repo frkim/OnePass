@@ -94,6 +94,7 @@
     "resetScansConfirm": "¿Eliminar todos los participantes y escaneos de la actividad \"{{name}}\"?",
     "resetScansSuccess": "Reinicio completado: {{p}} participantes y {{s}} escaneos eliminados.",
     "cannotDeleteLast": "Debe existir al menos una actividad.",
+    "makeDefault": "Establecer como predeterminada",
     "add": "Añadir actividad",
     "edit": "Editar",
     "rename": "Renombrar",
@@ -116,7 +117,8 @@
     "duplicateAt": "Este participante ya fue escaneado para esta actividad el {{when}}.",
     "detailsBadgeId": "ID de credencial",
     "detailsActivity": "Actividad",
-    "detailsScannedAt": "Escaneado el"
+    "detailsScannedAt": "Escaneado el",
+    "scanBtn": "Escanear"
   },
   "users": {
     "title": "Usuarios",
@@ -126,6 +128,7 @@
     "password": "Contraseña",
     "role": "Rol",
     "delete": "Eliminar",
+    "edit": "Editar usuario",
     "active": "Activo",
     "disabled": "Deshabilitado",
     "enable": "Habilitar",
@@ -166,7 +169,8 @@
     "deleteConfirm": "¿Eliminar al participante \"{{name}}\" y todos sus escaneos en esta actividad?",
     "previous": "Anterior",
     "next": "Siguiente",
-    "pageOf": "Página {{page}} de {{total}}"
+    "pageOf": "Página {{page}} de {{total}}",
+    "activity": "Actividad"
   },
   "globalAdmin": {
     "title": "Administración global",

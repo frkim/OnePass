@@ -99,6 +99,7 @@
     "resetScansConfirm": "Delete all participants and scans for activity \"{{name}}\"?",
     "resetScansSuccess": "Reset done: {{p}} participants, {{s}} scans deleted.",
     "cannotDeleteLast": "At least one activity must always exist.",
+    "makeDefault": "Make default",
     "add": "Add activity",
     "edit": "Edit",
     "rename": "Rename",
@@ -121,7 +122,8 @@
     "duplicateAt": "This participant has already been scanned for this activity on {{when}}.",
     "detailsBadgeId": "Badge ID",
     "detailsActivity": "Activity",
-    "detailsScannedAt": "Scanned at"
+    "detailsScannedAt": "Scanned at",
+    "scanBtn": "Scan"
   },
   "users": {
     "title": "Users",
@@ -131,6 +133,7 @@
     "password": "Password",
     "role": "Role",
     "delete": "Delete",
+    "edit": "Edit user",
     "active": "Active",
     "disabled": "Disabled",
     "enable": "Enable",
@@ -171,7 +174,8 @@
     "deleteConfirm": "Delete participant \"{{name}}\" and all of their scans for this activity?",
     "previous": "Previous",
     "next": "Next",
-    "pageOf": "Page {{page}} of {{total}}"
+    "pageOf": "Page {{page}} of {{total}}",
+    "activity": "Activity"
   },
   "globalAdmin": {
     "title": "Global administration",

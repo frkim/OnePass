@@ -22,14 +22,18 @@ interface ParticipantsTableProps {
   participants: Participant[];
   canDelete: boolean;
   onDelete?: (participant: Participant) => void | Promise<void>;
+  /** Optional callback when a participant row is clicked (e.g. to scan). */
+  onSelect?: (participant: Participant) => void | Promise<void>;
   /** Map from participant id to their most recent scannedAt ISO string. */
   scanTimes?: Record<string, string>;
+  /** When provided, replaces the email column with an activity-name column. */
+  activityNames?: Record<string, string>;
 }
 
 const PAGE_SIZES = [20, 100, 200] as const;
 type PageSize = typeof PAGE_SIZES[number];
 
-export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes }: ParticipantsTableProps) {
+export function ParticipantsTable({ participants, canDelete, onDelete, onSelect, scanTimes, activityNames }: ParticipantsTableProps) {
   const { t } = useTranslation();
 
   const [search, setSearch] = useState('');
@@ -56,11 +60,19 @@ export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes
 
     return participants.filter(p => {
       if (q) {
-        const haystack = `${p.displayName} ${p.email ?? ''} ${p.id}`.toLowerCase();
+        const haystack = activityNames
+          ? `${p.displayName} ${activityNames[p.activityId] ?? ''} ${p.id}`.toLowerCase()
+          : `${p.displayName} ${p.email ?? ''} ${p.id}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       if (fName && !p.displayName.toLowerCase().includes(fName)) return false;
-      if (fEmail && !(p.email ?? '').toLowerCase().includes(fEmail)) return false;
+      if (fEmail) {
+        if (activityNames) {
+          if (!(activityNames[p.activityId] ?? '').toLowerCase().includes(fEmail)) return false;
+        } else {
+          if (!(p.email ?? '').toLowerCase().includes(fEmail)) return false;
+        }
+      }
       if (fId && !p.id.toLowerCase().includes(fId)) return false;
       return true;
     });
@@ -70,8 +82,12 @@ export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes
     const arr = [...filtered];
     const dir = sortDir === 'asc' ? 1 : -1;
     arr.sort((a, b) => {
-      const va = sortKey === 'lastScannedAt' ? (scanTimes?.[a.id] ?? '') : (a[sortKey] ?? '').toString().toLowerCase();
-      const vb = sortKey === 'lastScannedAt' ? (scanTimes?.[b.id] ?? '') : (b[sortKey] ?? '').toString().toLowerCase();
+      const va = sortKey === 'lastScannedAt' ? (scanTimes?.[a.id] ?? '')
+        : sortKey === 'email' && activityNames ? (activityNames[a.activityId] ?? '').toLowerCase()
+        : (a[sortKey] ?? '').toString().toLowerCase();
+      const vb = sortKey === 'lastScannedAt' ? (scanTimes?.[b.id] ?? '')
+        : sortKey === 'email' && activityNames ? (activityNames[b.activityId] ?? '').toLowerCase()
+        : (b[sortKey] ?? '').toString().toLowerCase();
       if (va < vb) return -1 * dir;
       if (va > vb) return 1 * dir;
       return 0;
@@ -143,19 +159,19 @@ export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes
             </th>
             <th
               role="columnheader"
-              aria-sort={ariaSort('email')}
-              onClick={() => toggleSort('email')}
-              className="sortable"
-            >
-              {t('activity.email')} {sortIndicator('email')}
-            </th>
-            <th
-              role="columnheader"
               aria-sort={ariaSort('id')}
               onClick={() => toggleSort('id')}
               className="sortable"
             >
               ID {sortIndicator('id')}
+            </th>
+            <th
+              role="columnheader"
+              aria-sort={ariaSort('email')}
+              onClick={() => toggleSort('email')}
+              className="sortable"
+            >
+              {activityNames ? t('participants.activity', 'Activity') : t('activity.email')} {sortIndicator('email')}
             </th>
             {scanTimes && (
               <th
@@ -167,6 +183,7 @@ export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes
                 {t('participants.lastScanned', 'Last scanned')} {sortIndicator('lastScannedAt')}
               </th>
             )}
+            {onSelect && <th />}
             {canDelete && <th aria-label={t('participants.actions') as string} />}
           </tr>
           <tr className="filter-row">
@@ -182,21 +199,22 @@ export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes
             <th>
               <input
                 type="text"
-                value={filters.email}
-                onChange={e => { setFilters(f => ({ ...f, email: e.target.value })); resetPage(); }}
-                placeholder={t('participants.filterPlaceholder') as string}
-                aria-label={`${t('activity.email')} ${t('participants.filterPlaceholder')}`}
-              />
-            </th>
-            <th>
-              <input
-                type="text"
                 value={filters.id}
                 onChange={e => { setFilters(f => ({ ...f, id: e.target.value })); resetPage(); }}
                 placeholder={t('participants.filterPlaceholder') as string}
                 aria-label={`ID ${t('participants.filterPlaceholder')}`}
               />
             </th>
+            <th>
+              <input
+                type="text"
+                value={filters.email}
+                onChange={e => { setFilters(f => ({ ...f, email: e.target.value })); resetPage(); }}
+                placeholder={t('participants.filterPlaceholder') as string}
+                aria-label={`${activityNames ? t('participants.activity', 'Activity') : t('activity.email')} ${t('participants.filterPlaceholder')}`}
+              />
+            </th>
+            {onSelect && <th />}
             {canDelete && <th />}
           </tr>
         </thead>
@@ -204,10 +222,21 @@ export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes
           {pageRows.map(p => (
             <tr key={p.id}>
               <td>{p.displayName}</td>
-              <td>{p.email}</td>
               <td><code>{p.id}</code></td>
+              <td>{activityNames ? (activityNames[p.activityId] ?? p.activityId) : p.email}</td>
               {scanTimes && (
                 <td>{scanTimes[p.id] ? new Date(scanTimes[p.id]).toLocaleString() : '—'}</td>
+              )}
+              {onSelect && (
+                <td style={{ textAlign: 'right' }}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(p)}
+                    title={t('scan.submit') as string}
+                  >
+                    {t('scan.scanBtn', 'Scan')}
+                  </button>
+                </td>
               )}
               {canDelete && (
                 <td style={{ textAlign: 'right' }}>
@@ -229,7 +258,7 @@ export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes
           ))}
           {pageRows.length === 0 && (
             <tr>
-              <td colSpan={canDelete ? (scanTimes ? 5 : 4) : (scanTimes ? 4 : 3)} style={{ color: 'var(--muted)' }}>
+              <td colSpan={(scanTimes ? 4 : 3) + (onSelect ? 1 : 0) + (canDelete ? 1 : 0)} style={{ color: 'var(--muted)' }}>
                 {t('participants.noResults')}
               </td>
             </tr>

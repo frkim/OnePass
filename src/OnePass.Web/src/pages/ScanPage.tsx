@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import QrScanner from 'qr-scanner';
-import { api, Activity } from '../api';
+import { api, Activity, Participant } from '../api';
 import { scanOrQueue, pendingCount, flushQueue } from '../scanQueue';
 import { PageHeader } from '../components/PageShell';
+import { ParticipantsTable } from '../components/ParticipantsTable';
 
 /**
  * Extracts the participant ID from a scanned QR code payload.
@@ -39,6 +40,9 @@ export default function ScanPage() {
   } | null>(null);
   const [queued, setQueued] = useState(pendingCount());
   const [cameraOn, setCameraOn] = useState(false);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [scanTimes, setScanTimes] = useState<Record<string, string>>({});
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const scannerRef = useRef<QrScanner | null>(null);
 
@@ -70,6 +74,38 @@ export default function ScanPage() {
     };
   }, []);
 
+  // Load participants + scan times when the selected activity changes
+  const loadParticipants = useCallback(async (aid: string) => {
+    if (!aid) { setParticipants([]); setScanTimes({}); return; }
+    setLoadingParticipants(true);
+    try {
+      const [p, scans] = await Promise.all([api.listParticipants(aid), api.listScans(aid)]);
+      setParticipants(p);
+      const times: Record<string, string> = {};
+      for (const s of scans) {
+        if (!times[s.participantId] || s.scannedAt > times[s.participantId]) {
+          times[s.participantId] = s.scannedAt;
+        }
+      }
+      setScanTimes(times);
+    } catch {
+      setParticipants([]);
+      setScanTimes({});
+    } finally {
+      setLoadingParticipants(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activityId) loadParticipants(activityId);
+  }, [activityId, loadParticipants]);
+
+  const activityNames = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const a of activities) map[a.id] = a.name;
+    return map;
+  }, [activities]);
+
   // Auto-submit a scan once we have an activity + participant ID
   async function submitScan(pid: string) {
     if (!activityId || !pid) return;
@@ -92,6 +128,8 @@ export default function ScanPage() {
       }
       setParticipantId('');
       setQueued(pendingCount());
+      // Refresh participants table to show updated scan times
+      loadParticipants(activityId);
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === 'duplicate') {
@@ -189,7 +227,7 @@ export default function ScanPage() {
         </div>
         <div className="field">
           <label htmlFor="act">{t('scan.chooseActivity')}</label>
-          <select id="act" value={activityId} onChange={e => setActivityId(e.target.value)}>
+          <select id="act" value={activityId} onChange={e => { setActivityId(e.target.value); setMessage(null); }}>
             {activities.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </div>
@@ -203,6 +241,35 @@ export default function ScanPage() {
         <p style={{ color: 'var(--muted)', marginTop: 0 }}>{t('scan.cameraHint')}</p>
         <video ref={videoRef} style={{ width: '100%', maxWidth: 480, borderRadius: 8 }} muted playsInline />
       </div>
+
+      {activityId && (
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+            <h2 style={{ margin: 0 }}>{t('activity.participants')}</h2>
+            <select
+              value={activityId}
+              onChange={e => { setActivityId(e.target.value); setMessage(null); }}
+              aria-label={t('scan.chooseActivity') as string}
+            >
+              {activities.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </div>
+          {loadingParticipants ? (
+            <p style={{ color: 'var(--muted)' }}>{t('common.loading', 'Loading…')}</p>
+          ) : (
+            <ParticipantsTable
+              participants={participants}
+              canDelete={true}
+              onDelete={async (p) => {
+                await api.deleteParticipant(activityId, p.id);
+                setParticipants(prev => prev.filter(x => x.id !== p.id));
+              }}
+              scanTimes={scanTimes}
+              activityNames={activityNames}
+            />
+          )}
+        </div>
+      )}
     </>
   );
 }

@@ -1,9 +1,9 @@
-import { useEffect, useState, FormEvent, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api, Activity, Participant } from '../api';
+import { api, Activity } from '../api';
 import { useAuth } from '../auth';
+import { useOrg } from '../org';
 import { formatDate } from '../i18n';
-import { ParticipantsTable } from '../components/ParticipantsTable';
 import { PageHeader, EmptyState, Spinner } from '../components/PageShell';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast, ToastContainer } from '../components/Toast';
@@ -12,17 +12,26 @@ import { ActivityDialog, ActivityDialogData } from '../components/ActivityDialog
 export default function ActivitiesPage() {
   const { t, i18n } = useTranslation();
   const { role } = useAuth();
+  const { active } = useOrg();
   const toast = useToast();
   const [list, setList] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [participants, setParticipants] = useState<Record<string, Participant[]>>({});
-  const [scanTimes, setScanTimes] = useState<Record<string, Record<string, string>>>({});
   const [dialog, setDialog] = useState<{ mode: 'add' | 'edit'; activity?: Activity } | null>(null);
   const [confirm, setConfirm] = useState<{
     title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void;
   } | null>(null);
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close popup when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(null);
+    }
+    if (menuOpen) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
 
   const refresh = useCallback(() => {
     api.listActivities()
@@ -77,32 +86,18 @@ export default function ActivitiesPage() {
     }
   }
 
-  async function toggleExpand(id: string) {
-    if (expanded === id) { setExpanded(null); return; }
-    setExpanded(id);
-    if (!participants[id]) {
-      const [p, scans] = await Promise.all([api.listParticipants(id), api.listScans(id)]);
-      setParticipants(prev => ({ ...prev, [id]: p }));
-      const times: Record<string, string> = {};
-      for (const s of scans) {
-        if (!times[s.participantId] || s.scannedAt > times[s.participantId]) {
-          times[s.participantId] = s.scannedAt;
-        }
-      }
-      setScanTimes(prev => ({ ...prev, [id]: times }));
+  async function makeDefault(a: Activity) {
+    if (!active?.id) return;
+    try {
+      const events = await api.listEvents(active.id);
+      const live = events.find(e => !e.isArchived) ?? events[0];
+      if (!live) return;
+      await api.updateEvent(active.id, live.id, { defaultActivityId: a.id });
+      setList(prev => prev.map(x => ({ ...x, isDefault: x.id === a.id })));
+      toast.success(t('activity.default') + ': ' + a.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
     }
-  }
-
-  async function onAddParticipant(e: FormEvent<HTMLFormElement>, activityId: string) {
-    e.preventDefault();
-    const formEl = e.currentTarget;
-    const form = new FormData(formEl);
-    const name = String(form.get('displayName') ?? '').trim();
-    if (!name) return;
-    const created = await api.addParticipant(activityId, name, String(form.get('email') ?? '') || undefined);
-    setParticipants(prev => ({ ...prev, [activityId]: [...(prev[activityId] || []), created] }));
-    formEl.reset();
-    toast.success(t('activity.addParticipant') + ': ' + created.displayName);
   }
 
   function askResetScans(a: Activity) {
@@ -115,10 +110,7 @@ export default function ActivitiesPage() {
         try {
           const r = await api.resetActivityScans(a.id);
           toast.success(t('activity.resetScansSuccess', { p: r.participantsDeleted, s: r.scansDeleted }));
-          if (expanded === a.id) {
-            const p = await api.listParticipants(a.id);
-            setParticipants(prev => ({ ...prev, [a.id]: p }));
-          }
+          refresh();
         } catch (err) {
           setError(err instanceof Error ? err.message : t('common.error'));
         }
@@ -176,7 +168,11 @@ export default function ActivitiesPage() {
               {list.map(a => (
                 <tr key={a.id}>
                   <td>
-                    <a onClick={() => toggleExpand(a.id)} style={{ cursor: 'pointer' }}>{a.name}</a>
+                    {isAdmin ? (
+                      <a onClick={() => setDialog({ mode: 'edit', activity: a })} style={{ cursor: 'pointer' }}>{a.name}</a>
+                    ) : (
+                      <span>{a.name}</span>
+                    )}
                     {a.isDefault && (
                       <span className="status-badge status-badge-info" style={{ marginLeft: '0.5rem' }}>
                         {t('activity.default')}
@@ -187,19 +183,25 @@ export default function ActivitiesPage() {
                   <td>{formatDate(a.endsAt, i18n.language)}</td>
                   <td>{a.maxScansPerParticipant <= 0 ? t('activity.unlimited') : a.maxScansPerParticipant}</td>
                   {isAdmin && (
-                    <td>
-                      <div className="actions-cell">
-                        <button className="secondary" onClick={() => setDialog({ mode: 'edit', activity: a })}
-                          title={t('activity.edit') as string}>
-                          {t('activity.edit')}
-                        </button>
-                        <button className="secondary" onClick={() => askResetScans(a)}>
-                          {t('activity.resetScans')}
-                        </button>
-                        <button className="danger" onClick={() => askDelete(a)}
-                          disabled={list.length <= 1} title={list.length <= 1 ? t('activity.cannotDeleteLast') : undefined}>
-                          {t('users.delete')}
-                        </button>
+                    <td style={{ textAlign: 'right' }}>
+                      <div className="row-menu" ref={menuOpen === a.id ? menuRef : undefined}>
+                        <button className="secondary row-menu-trigger" onClick={() => setMenuOpen(menuOpen === a.id ? null : a.id)}>⋯</button>
+                        {menuOpen === a.id && (
+                          <div className="row-menu-panel">
+                            {!a.isDefault && (
+                              <button className="row-menu-item" onClick={() => { setMenuOpen(null); makeDefault(a); }}>
+                                {t('activity.makeDefault', 'Make default')}
+                              </button>
+                            )}
+                            <button className="row-menu-item" onClick={() => { setMenuOpen(null); askResetScans(a); }}>
+                              {t('activity.resetScans')}
+                            </button>
+                            <button className="row-menu-item row-menu-item-danger" onClick={() => { setMenuOpen(null); askDelete(a); }}
+                              disabled={list.length <= 1} title={list.length <= 1 ? t('activity.cannotDeleteLast') : undefined}>
+                              {t('users.delete')}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   )}
@@ -209,34 +211,6 @@ export default function ActivitiesPage() {
           </table>
         )}
       </div>
-
-      {expanded && (
-        <div className="card">
-          <h2>{t('activity.participants')}</h2>
-          <form onSubmit={e => onAddParticipant(e, expanded)} className="row" style={{ marginBottom: '0.75rem' }}>
-            <input name="displayName" placeholder={t('activity.displayName')} required style={{ maxWidth: 240 }} />
-            <input name="email" type="email" placeholder={t('activity.email')} style={{ maxWidth: 240 }} />
-            <button type="submit">{t('activity.addParticipant')}</button>
-          </form>
-          <ParticipantsTable
-            participants={participants[expanded] || []}
-            canDelete={isAdmin}
-            scanTimes={scanTimes[expanded]}
-            onDelete={async (p) => {
-              try {
-                await api.deleteParticipant(expanded, p.id);
-                setParticipants(prev => ({
-                  ...prev,
-                  [expanded]: (prev[expanded] || []).filter(x => x.id !== p.id),
-                }));
-                toast.success(t('participants.delete') + ': ' + p.displayName);
-              } catch (err) {
-                setError(err instanceof Error ? err.message : t('common.error'));
-              }
-            }}
-          />
-        </div>
-      )}
 
       <ActivityDialog
         open={!!dialog}

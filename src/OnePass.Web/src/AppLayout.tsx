@@ -6,6 +6,7 @@ import { useOrg } from './org';
 import { api } from './api';
 import { LanguageSelect } from './LanguageSelect';
 import { FirstRunWizard } from './components/FirstRunWizard';
+import { OrgDialog, OrgDialogData } from './components/OrgDialog';
 
 /**
  * Top bar layout, three logical clusters:
@@ -23,7 +24,6 @@ export function AppLayout() {
   const { orgs, active, switchOrg, refresh } = useOrg();
   const [eventName, setEventName] = useState<string>('');
   const [creating, setCreating] = useState(false);
-  const [newOrgName, setNewOrgName] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   // Drives the first-run wizard: shown when an Admin signs in for the
@@ -79,16 +79,11 @@ export function AppLayout() {
   if (loading) return <div style={{ padding: '2rem' }}>{t('common.loading')}</div>;
   if (!username) return <Navigate to="/login" replace />;
 
-  async function onCreateOrg(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newOrgName.trim()) return;
+  async function onCreateOrg(data: OrgDialogData) {
     try {
-      const created = await api.createOrg(newOrgName.trim());
-      // Pass the new org id explicitly so it wins over any race with the
-      // initial mount-time refresh that may still be in flight.
+      const created = await api.createOrg(data.name, data.slug || undefined);
       await refresh(created.id);
       setCreating(false);
-      setNewOrgName('');
     } catch (err) {
       // eslint-disable-next-line no-alert
       alert(err instanceof Error ? err.message : 'Failed to create organisation.');
@@ -193,24 +188,11 @@ export function AppLayout() {
           </div>
         </div>
       </header>
-      {creating && (
-        <form
-          onSubmit={onCreateOrg}
-          style={{ padding: '1rem', display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border, #ddd)' }}
-        >
-          <input
-            autoFocus
-            placeholder={t('nav.newOrgPlaceholder', 'Organisation name') as string}
-            value={newOrgName}
-            onChange={e => setNewOrgName(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <button type="submit">{t('common.create', 'Create')}</button>
-          <button type="button" className="secondary" onClick={() => { setCreating(false); setNewOrgName(''); }}>
-            {t('common.cancel', 'Cancel')}
-          </button>
-        </form>
-      )}
+      <OrgDialog
+        open={creating}
+        onSave={onCreateOrg}
+        onCancel={() => setCreating(false)}
+      />
       {maintenanceBanner && (
         <div className="maintenance-banner" role="status">
           <span aria-hidden="true">⚠️ </span>{maintenanceBanner}

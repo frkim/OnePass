@@ -93,7 +93,9 @@
     "resetScans": "Réinitialiser les scans",
     "resetScansConfirm": "Supprimer tous les participants et scans de l'activité « {{name}} » ?",
     "resetScansSuccess": "Réinitialisation effectuée : {{p}} participants, {{s}} scans supprimés.",
-    "cannotDeleteLast": "Au moins une activité doit toujours exister.",    "add": "Ajouter une activité",
+    "cannotDeleteLast": "Au moins une activité doit toujours exister.",
+    "makeDefault": "Définir par défaut",
+    "add": "Ajouter une activité",
     "edit": "Modifier",    "rename": "Renommer",
     "renameTitle": "Renommer l’activité",
     "renameNewName": "Nouveau nom"
@@ -114,7 +116,8 @@
     "duplicateAt": "Ce participant a déjà été scanné pour cette activité le {{when}}.",
     "detailsBadgeId": "ID du badge",
     "detailsActivity": "Activité",
-    "detailsScannedAt": "Scanné à"
+    "detailsScannedAt": "Scanné à",
+    "scanBtn": "Scanner"
   },
   "users": {
     "title": "Utilisateurs",
@@ -124,6 +127,7 @@
     "password": "Mot de passe",
     "role": "Rôle",
     "delete": "Supprimer",
+    "edit": "Modifier l'utilisateur",
     "active": "Actif",
     "disabled": "Désactivé",
     "enable": "Activer",
@@ -164,7 +168,8 @@
     "deleteConfirm": "Supprimer le participant \"{{name}}\" et tous ses scans pour cette activité ?",
     "previous": "Précédent",
     "next": "Suivant",
-    "pageOf": "Page {{page}} sur {{total}}"
+    "pageOf": "Page {{page}} sur {{total}}",
+    "activity": "Activité"
   },
   "globalAdmin": {
     "title": "Administration globale",

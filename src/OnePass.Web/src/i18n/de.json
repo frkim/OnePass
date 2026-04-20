@@ -94,6 +94,7 @@
     "resetScansConfirm": "Alle Teilnehmer und Scans der Aktivität \"{{name}}\" löschen?",
     "resetScansSuccess": "Zurückgesetzt: {{p}} Teilnehmer und {{s}} Scans gelöscht.",
     "cannotDeleteLast": "Mindestens eine Aktivität muss vorhanden sein.",
+    "makeDefault": "Als Standard festlegen",
     "add": "Aktivität hinzufügen",
     "edit": "Bearbeiten",
     "rename": "Umbenennen",
@@ -116,7 +117,8 @@
     "duplicateAt": "Dieser Teilnehmer wurde für diese Aktivität bereits am {{when}} gescannt.",
     "detailsBadgeId": "Badge-ID",
     "detailsActivity": "Aktivität",
-    "detailsScannedAt": "Gescannt am"
+    "detailsScannedAt": "Gescannt am",
+    "scanBtn": "Scannen"
   },
   "users": {
     "title": "Benutzer",
@@ -126,6 +128,7 @@
     "password": "Passwort",
     "role": "Rolle",
     "delete": "Löschen",
+    "edit": "Benutzer bearbeiten",
     "active": "Aktiv",
     "disabled": "Deaktiviert",
     "enable": "Aktivieren",
@@ -166,7 +169,8 @@
     "deleteConfirm": "Teilnehmer \"{{name}}\" und alle seine Scans für diese Aktivität löschen?",
     "previous": "Zurück",
     "next": "Weiter",
-    "pageOf": "Seite {{page}} von {{total}}"
+    "pageOf": "Seite {{page}} von {{total}}",
+    "activity": "Aktivität"
   },
   "globalAdmin": {
     "title": "Globale Verwaltung",
