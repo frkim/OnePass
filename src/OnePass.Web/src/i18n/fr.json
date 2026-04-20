@@ -10,6 +10,11 @@
     "scan": "Scanner",
     "users": "Utilisateurs",
     "parameters": "Paramètres",
+    "profile": "Profil",
+    "help": "Aide",
+    "setupWizard": "Assistant de configuration",
+    "globalAdmin": "Administration globale",
+
     "logout": "Déconnexion",
     "login": "Connexion"
   },
@@ -28,13 +33,22 @@
     "continueWithMicrosoft": "Continuer avec Microsoft",
     "googleFailed": "Échec de la connexion Google. Réessayez.",
     "microsoftFailed": "Échec de la connexion Microsoft. Réessayez.",
-    "accountDisabled": "Ce compte a été désactivé."
+    "accountDisabled": "Ce compte a été désactivé.",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "register": {
     "title": "Créer un compte",
     "email": "E-mail",
     "username": "Identifiant",
     "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "usernameChecking": "Vérification de la disponibilité\u2026",
+    "usernameAvailable": "Identifiant disponible.",
+    "usernameTaken": "Cet identifiant est déjà utilisé.",
+    "usernameTooShort": "L'identifiant doit contenir au moins 3 caractères.",
+    "usernameCheckFailed": "Impossible de vérifier la disponibilité.",
     "submit": "S'inscrire",
     "hasAccount": "Déjà un compte ?",
     "login": "Se connecter",
@@ -124,5 +138,163 @@
     "loading": "Chargement…",
     "error": "Une erreur est survenue.",
     "required": "Obligatoire"
+  },
+  "participants": {
+    "searchPlaceholder": "Rechercher nom, e-mail ou id\u2026",
+    "filterPlaceholder": "Filtrer\u2026",
+    "pageSize": "Afficher",
+    "countLabel": "{{shown}} sur {{filtered}} affichés (total {{total}})",
+    "noResults": "Aucun participant ne correspond aux filtres.",
+    "actions": "Actions",
+    "delete": "Supprimer",
+    "deleteConfirm": "Supprimer le participant \"{{name}}\" et tous ses scans pour cette activité ?",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pageOf": "Page {{page}} sur {{total}}"
+  },
+  "globalAdmin": {
+    "title": "Administration globale",
+    "subtitle": "Paramètres réservés à l'opérateur de la plateforme OnePass. Visible uniquement par les comptes Admin globaux.",
+    "statsTitle": "Vue d'ensemble de la plateforme",
+    "orgsTotal": "Organisations",
+    "orgsActive": "Orgs actives",
+    "orgsSuspended": "Orgs suspendues",
+    "usersTotal": "Utilisateurs",
+    "usersLocked": "Utilisateurs verrouillés",
+    "usersAdmins": "Admins globaux",
+    "settingsTitle": "Paramètres de la plateforme",
+    "registrationOpen": "Autoriser l'inscription publique",
+    "maintenanceMessage": "Bannière de maintenance (affichée dans toute l'application)",
+    "maintenancePlaceholder": "ex. : Maintenance planifiée dimanche de 02h00 à 03h00 UTC\u2026",
+    "defaultRetentionDays": "Rétention par défaut (jours, 0 = jamais)",
+    "defaultLimits": "Limites d'usage équitable par défaut pour les nouvelles organisations",
+    "maxEvents": "Événements max / org",
+    "maxMembers": "Membres max / org",
+    "maxScansPerMonth": "Scans max / mois",
+    "savedAt": "Enregistré à {{time}}",
+    "orgsTitle": "Organisations",
+    "orgsNone": "Aucune organisation n'a encore été créée.",
+    "colName": "Nom",
+    "colSlug": "Slug",
+    "colStatus": "Statut",
+    "colPlan": "Forfait",
+    "colMembers": "Membres",
+    "colCreated": "Créée",
+    "colActions": "Actions",
+    "suspend": "Suspendre",
+    "reactivate": "Réactiver",
+    "confirmStatus": "Passer cette organisation au statut \"{{status}}\" ?"
+  },
+  "wizard": {
+    "title": "Bienvenue sur OnePass",
+    "progress": "Avancement de l'installation",
+    "skip": "Plus tard",
+    "back": "Retour",
+    "next": "Suivant",
+    "finish": "Terminer l'installation",
+    "step1": {
+      "title": "Étape 1 \u00b7 Votre organisation",
+      "lead": "Configurons votre tenant. L'organisation possède les événements, les membres et le branding."
+    },
+    "step2": {
+      "title": "Étape 2 \u00b7 Votre premier événement",
+      "lead": "Un événement regroupe les activités qui se déroulent ensemble \u2014 conférence, salon ou journée interne."
+    },
+    "step3": {
+      "title": "Étape 3 \u00b7 Activité par défaut",
+      "lead": "Les activités sont les choses scannables dans un événement. Vous pouvez les ajouter plus tard."
+    },
+    "step4": {
+      "title": "Étape 4 \u00b7 Récapitulatif",
+      "lead": "Presque terminé. Vérifiez vos choix \u2014 nous créerons tout en une seule fois."
+    },
+    "org": {
+      "name": "Nom de l'organisation",
+      "namePlaceholder": "ex.\u202fMicrosoft",
+      "slug": "Slug d'URL (optionnel)",
+      "slugPlaceholder": "ex.\u202fmicrosoft",
+      "slugHint": "Minuscules et tirets uniquement. Laissez vide pour dériver du nom."
+    },
+    "event": {
+      "name": "Nom de l'événement",
+      "namePlaceholder": "ex.\u202fDevoxx",
+      "venue": "Lieu (optionnel)",
+      "venuePlaceholder": "ex.\u202fAnvers \u2013 Kinepolis",
+      "startsAt": "Début",
+      "endsAt": "Fin"
+    },
+    "activity": {
+      "name": "Nom de l'activité",
+      "namePlaceholder": "ex.\u202fCraneGrabberClawMachine",
+      "description": "Description (optionnelle)",
+      "optional": "Optionnel \u2014 laissez vide pour ajouter des activités plus tard."
+    },
+    "summary": {
+      "missing": "manquant",
+      "skipped": "ignoré"
+    }
+  },
+  "help": {
+    "title": "Aide & glossaire",
+    "intro": "OnePass modélise les événements en présentiel sous forme d'une petite hiérarchie : une Organisation organise des Événements, chaque Événement regroupe des Activités, chaque Activité a des Participants, et un Scan est enregistré chaque fois qu'un Scanner badğe un Participant pour une Activité.",
+    "hierarchyTitle": "Hiérarchie métier",
+    "entitiesTitle": "Concepts",
+    "org": {
+      "title": "Organisation",
+      "desc": "Le tenant racine. Possède les événements, les membres, le branding et les quotas d'usage équitable. Vous pouvez être membre de plusieurs organisations et basculer depuis l'en-tête.",
+      "bullet1": "<strong>Exemples :</strong> Microsoft, Acme Corp, votre communauté.",
+      "bullet2": "<strong>Propriétaire :</strong> l'utilisateur créateur (rôle Owner).",
+      "bullet3": "<strong>Contient :</strong> Événements, Membres, Invitations."
+    },
+    "event": {
+      "title": "Événement",
+      "desc": "Une rencontre bornée dans le temps au sein d'une organisation \u2014 conférence, salon, hackathon interne\u2026",
+      "bullet1": "<strong>Exemple :</strong> Devoxx 2026 (12\u201316 octobre, Anvers).",
+      "bullet2": "<strong>Contient :</strong> une ou plusieurs Activités ainsi qu'une activité par défaut utilisée par la page de Scan."
+    },
+    "activity": {
+      "title": "Activité",
+      "desc": "Quelque chose de scannable au sein d'un événement : jeu sur stand, atelier, point d'entrée, comptoir repas\u2026 Les activités définissent quand les scans sont acceptés et combien de scans chaque participant peut recevoir.",
+      "bullet1": "<strong>Exemple :</strong> CraneGrabberClawMachine \u2014 le jeu de la pince sur le stand, où chaque visiteur a droit à exactement une partie.",
+      "bullet2": "<strong>Fenêtre temporelle :</strong> les dates de début/fin contrôlent quand les scans sont acceptés.",
+      "bullet3": "<strong>Scans max par participant :</strong> 1 par défaut, ou illimité."
+    },
+    "participant": {
+      "title": "Participant",
+      "desc": "Une personne pouvant être scannée pour une activité. Identifiée par un code de badge (QR / code-barres), avec un nom affiché et un e-mail optionnels.",
+      "bullet1": "<strong>Exemple :</strong> Alice avec le badge A-001 à Devoxx.",
+      "bullet2": "<strong>Créé :</strong> en amont par import, ou à la volée au premier scan."
+    },
+    "scan": {
+      "title": "Scan",
+      "desc": "L'événement élémentaire enregistré chaque fois qu'un Scanner badğe un Participant pour une Activité. Porte toujours qui a scanné, quand, et depuis quel appareil.",
+      "bullet1": "Les scans sont refusés si la fenêtre de l'activité est fermée ou si le quota par participant est atteint.",
+      "bullet2": "Les scans hors-ligne sont mis en file dans le navigateur et rejoués dès le retour de la connexion."
+    },
+    "user": {
+      "title": "Utilisateur & rôles",
+      "desc": "Un compte connecté. Chaque appartenance à une organisation porte un rôle :",
+      "role": {
+        "admin": "<strong>Admin / Owner</strong> \u2014 configuration complète, peut inviter des membres et gérer événements, activités et utilisateurs.",
+        "scanner": "<strong>Scanner</strong> \u2014 peut enregistrer des scans depuis la page Scan ; ne peut pas reconfigurer l'événement.",
+        "viewer": "<strong>Viewer</strong> \u2014 accès en lecture seule au tableau de bord."
+      }
+    },
+    "invitation": {
+      "title": "Invitation",
+      "desc": "Un lien à usage unique qu'un Admin envoie pour ajouter quelqu'un à une organisation avec un rôle choisi. Les invitations expirent et peuvent être révoquées."
+    },
+    "exampleTitle": "Un exemple de bout en bout",
+    "exampleIntro": "Tout assemblé avec un tenant fictif :",
+    "exampleNarrative": "<strong>Microsoft</strong> (Organisation) sponsorise un stand à <strong>Devoxx</strong> (Événement). Sur le stand, ils proposent l'activité <strong>CraneGrabberClawMachine</strong>, limitée à un scan par badge pour que chaque visiteur ait droit à exactement une partie. Une personne avec le rôle Scanner se tient sur le stand, ouvre la page Scan et badğe chaque joueur. Au premier scan, un Participant est créé, puis le scan est enregistré. Les Admins suivent les totaux en direct sur le Dashboard et exportent le CSV en fin de journée.",
+    "workflowTitle": "Parcours typique",
+    "workflow": {
+      "step1": "Créer une <strong>Organisation</strong> (ou accepter une invitation).",
+      "step2": "Créer un <strong>Événement</strong> pour la conférence / la rencontre.",
+      "step3": "Ajouter une ou plusieurs <strong>Activités</strong> avec leur fenêtre temporelle et le quota de scans par participant.",
+      "step4": "<strong>Inviter</strong> les équipes avec le bon rôle (Scanner pour le stand, Admin pour les organisateurs).",
+      "step5": "Le jour J, les scanners ouvrent la page <strong>Scan</strong> et badğent les participants \u2014 les nouveaux participants sont créés automatiquement.",
+      "step6": "Les Admins suivent les compteurs en direct sur le <strong>Dashboard</strong> et y exportent les résultats."
+    }
   }
 }

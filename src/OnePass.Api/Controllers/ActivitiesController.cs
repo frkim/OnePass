@@ -160,6 +160,37 @@ public class ActivitiesController : ControllerBase
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
     }
 
+    /// <summary>
+    /// Removes a single participant from an activity together with every
+    /// scan that referenced them. Reset-style cascade is intentional: if
+    /// the participant goes, their scans must go too — otherwise the
+    /// dashboard counters and scan history would dangle.
+    /// </summary>
+    [HttpDelete("{id}/participants/{participantId}")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> DeleteParticipant(string id, string participantId, CancellationToken ct)
+    {
+        var participant = await _participants.GetAsync(id, participantId, ct);
+        if (participant is null) return NotFound();
+
+        // Cascade-delete the participant's scans first so a partial failure
+        // never leaves orphan scans pointing at a missing participant.
+        var scansRepo = _factory.GetRepository<ScanEntity>(ScanService.TableName);
+        var deletedScans = 0;
+        await foreach (var s in scansRepo.QueryAsync(null, ct))
+        {
+            if (s.PartitionKey == id && s.ParticipantId == participantId)
+            {
+                await scansRepo.DeleteAsync(s.PartitionKey, s.RowKey, ct);
+                deletedScans++;
+            }
+        }
+
+        var partsRepo = _factory.GetRepository<ParticipantEntity>(ParticipantService.TableName);
+        await partsRepo.DeleteAsync(id, participantId, ct);
+        return Ok(new { participantDeleted = true, scansDeleted = deletedScans });
+    }
+
     // ---- Scans ----
 
     [HttpPost("{id}/scans")]

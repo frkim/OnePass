@@ -76,6 +76,25 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Lightweight availability check used by the registration form to
+    /// give immediate feedback as the user types. Rate-limited via the
+    /// anonymous policy to mitigate account-enumeration scraping
+    /// (OWASP A07): a determined attacker can still guess one username at
+    /// a time, but the same protection applies to the eventual register
+    /// call which already returns 409 on conflict.
+    /// </summary>
+    [HttpGet("check-username")]
+    [AllowAnonymous]
+    [EnableRateLimiting(FairUseRateLimiter.AnonymousPolicyName)]
+    public async Task<IActionResult> CheckUsername([FromQuery] string? username, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(username) || username.Trim().Length < 3)
+            return Ok(new { available = false, reason = "too_short" });
+        var existing = await _users.FindByEmailOrUsernameAsync(username.Trim(), ct);
+        return Ok(new { available = existing is null });
+    }
+
+    /// <summary>
     /// Lightweight discovery endpoint so the SPA knows which external IdPs
     /// are wired in this environment. Returning <c>{ google: false }</c>
     /// when the OAuth client is not configured keeps the "Continue with

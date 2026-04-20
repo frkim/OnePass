@@ -61,7 +61,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (resp.status === 204) return undefined as unknown as T;
   const ct = resp.headers.get('content-type') || '';
   if (ct.includes('application/json')) return (await resp.json()) as T;
-  return (await resp.text()) as unknown as T;
+  // If the caller expected JSON but the server returned the SPA fallback
+  // HTML (typically because the API endpoint is missing or the route is
+  // unmapped), fail loudly instead of silently returning a string that
+  // looks like a value of `T` and crashes the consumer downstream.
+  const text = await resp.text();
+  if (text.trimStart().startsWith('<')) {
+    throw new Error(`Unexpected HTML response from ${path} (status ${resp.status}). The endpoint may be missing.`);
+  }
+  return text as unknown as T;
 }
 
 export interface LoginResponse {
@@ -194,6 +202,11 @@ export const api = {
     }),
   /** Discovery endpoint listing the federated identity providers wired in this environment. */
   getProviders: () => request<{ google: boolean; microsoft: boolean }>('/api/auth/providers'),
+  /** Live availability check used by the registration form (rate-limited server-side). */
+  checkUsername: (username: string) =>
+    request<{ available: boolean; reason?: string }>(
+      `/api/auth/check-username?username=${encodeURIComponent(username)}`,
+    ),
   me: () => request<Me>('/api/auth/me'),
   setMyDefaultActivity: (defaultActivityId: string | null) =>
     request<{ defaultActivityId: string | null }>('/api/auth/me', {
@@ -270,6 +283,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ displayName, email }),
     }),
+  deleteParticipant: (activityId: string, participantId: string) =>
+    request<{ participantDeleted: boolean; scansDeleted: number }>(
+      `/api/activities/${activityId}/participants/${encodeURIComponent(participantId)}`,
+      { method: 'DELETE' },
+    ),
 
   scan: (activityId: string, participantId: string) =>
     request<Scan>(`/api/activities/${activityId}/scans`, {
@@ -286,4 +304,51 @@ export const api = {
   updateUser: (id: string, patch: { isActive?: boolean; defaultActivityId?: string | null; allowedActivityIds?: string[] }) =>
     request<AppUser>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   deleteUser: (id: string) => request<void>(`/api/users/${id}`, { method: 'DELETE' }),
+
+  // ---- Global / Platform administration (PlatformAdmin only) -------------
+  globalAdmin: {
+    stats: () => request<GlobalAdminStats>('/api/admin/global/stats'),
+    listOrgs: () => request<GlobalAdminOrg[]>('/api/admin/global/orgs'),
+    setOrgStatus: (orgId: string, status: 'Active' | 'Suspended' | 'Deleted') =>
+      request<{ id: string; status: string }>(
+        `/api/admin/global/orgs/${encodeURIComponent(orgId)}/status`,
+        { method: 'POST', body: JSON.stringify({ status }) },
+      ),
+    getSettings: () => request<PlatformSettings>('/api/admin/global/settings'),
+    updateSettings: (patch: Partial<Omit<PlatformSettings, 'updatedAt' | 'updatedByUserId' | 'partitionKey' | 'id'>>) =>
+      request<PlatformSettings>('/api/admin/global/settings', {
+        method: 'PUT',
+        body: JSON.stringify(patch),
+      }),
+  },
 };
+
+// ---- Global admin types ----------------------------------------------------
+
+export interface GlobalAdminStats {
+  orgs: { total: number; active: number; suspended: number; deleted: number };
+  users: { total: number; active: number; locked: number; admins: number };
+  generatedAt: string;
+}
+
+export interface GlobalAdminOrg {
+  id: string;
+  name: string;
+  slug: string;
+  status: 'Active' | 'Suspended' | 'Deleted';
+  plan: string;
+  region: string;
+  ownerUserId: string;
+  createdAt: string;
+  memberCount: number;
+  limits: { maxEvents: number; maxMembers: number; maxScansPerMonth: number };
+}
+
+export interface PlatformSettings {
+  registrationOpen: boolean;
+  maintenanceMessage?: string | null;
+  defaultRetentionDays: number;
+  defaultOrgLimits: { maxEvents: number; maxMembers: number; maxScansPerMonth: number };
+  updatedAt: string;
+  updatedByUserId?: string | null;
+}

@@ -12,6 +12,10 @@
     "parameters": "Settings",
     "orgSettings": "Organisation",
     "profile": "Profile",
+    "help": "Help",
+    "setupWizard": "Setup wizard",
+    "globalAdmin": "Global admin",
+
     "activeOrg": "Active organisation",
     "createOrg": "+ Create organisation…",
     "newOrgPlaceholder": "Organisation name",
@@ -34,13 +38,22 @@
     "continueWithMicrosoft": "Continue with Microsoft",
     "googleFailed": "Google sign-in failed. Please try again.",
     "microsoftFailed": "Microsoft sign-in failed. Please try again.",
-    "accountDisabled": "This account has been disabled."
+    "accountDisabled": "This account has been disabled.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "register": {
     "title": "Create an account",
     "email": "Email",
     "username": "Username",
     "password": "Password",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords do not match.",
+    "usernameChecking": "Checking availability\u2026",
+    "usernameAvailable": "Username is available.",
+    "usernameTaken": "This username is already taken.",
+    "usernameTooShort": "Username must be at least 3 characters.",
+    "usernameCheckFailed": "Could not check username availability.",
     "submit": "Register",
     "hasAccount": "Already have an account?",
     "login": "Sign in",
@@ -130,5 +143,163 @@
     "loading": "Loading…",
     "error": "Something went wrong.",
     "required": "Required"
+  },
+  "participants": {
+    "searchPlaceholder": "Search name, email or id\u2026",
+    "filterPlaceholder": "Filter\u2026",
+    "pageSize": "Show",
+    "countLabel": "Showing {{shown}} of {{filtered}} (total {{total}})",
+    "noResults": "No participants match your filters.",
+    "actions": "Actions",
+    "delete": "Delete",
+    "deleteConfirm": "Delete participant \"{{name}}\" and all of their scans for this activity?",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{total}}"
+  },
+  "globalAdmin": {
+    "title": "Global administration",
+    "subtitle": "Settings reserved for the OnePass platform operator. Visible to global Admin accounts only.",
+    "statsTitle": "Platform overview",
+    "orgsTotal": "Organisations",
+    "orgsActive": "Active orgs",
+    "orgsSuspended": "Suspended orgs",
+    "usersTotal": "Users",
+    "usersLocked": "Locked users",
+    "usersAdmins": "Global admins",
+    "settingsTitle": "Platform settings",
+    "registrationOpen": "Allow public self-registration",
+    "maintenanceMessage": "Maintenance banner (shown across the app)",
+    "maintenancePlaceholder": "e.g. Scheduled maintenance on Sunday from 02:00 to 03:00 UTC\u2026",
+    "defaultRetentionDays": "Default retention (days, 0 = never)",
+    "defaultLimits": "Default fair-use limits for new organisations",
+    "maxEvents": "Max events / org",
+    "maxMembers": "Max members / org",
+    "maxScansPerMonth": "Max scans / month",
+    "savedAt": "Saved at {{time}}",
+    "orgsTitle": "Organisations",
+    "orgsNone": "No organisations have been created yet.",
+    "colName": "Name",
+    "colSlug": "Slug",
+    "colStatus": "Status",
+    "colPlan": "Plan",
+    "colMembers": "Members",
+    "colCreated": "Created",
+    "colActions": "Actions",
+    "suspend": "Suspend",
+    "reactivate": "Reactivate",
+    "confirmStatus": "Set this organisation to status \"{{status}}\"?"
+  },
+  "wizard": {
+    "title": "Welcome to OnePass",
+    "progress": "Setup progress",
+    "skip": "Skip for now",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish setup",
+    "step1": {
+      "title": "Step 1 \u00b7 Your organisation",
+      "lead": "Let's set up your tenant. The organisation owns events, members and branding."
+    },
+    "step2": {
+      "title": "Step 2 \u00b7 Your first event",
+      "lead": "An event groups the activities running together \u2014 a conference, expo or internal day."
+    },
+    "step3": {
+      "title": "Step 3 \u00b7 Default activity",
+      "lead": "Activities are the scannable things inside an event. You can skip this and add activities later."
+    },
+    "step4": {
+      "title": "Step 4 \u00b7 Review",
+      "lead": "Almost done. Review the choices below and we'll create everything in one go."
+    },
+    "org": {
+      "name": "Organisation name",
+      "namePlaceholder": "e.g. Microsoft",
+      "slug": "URL slug (optional)",
+      "slugPlaceholder": "e.g. microsoft",
+      "slugHint": "Lower-case, dashes only. Leave blank to derive it from the name."
+    },
+    "event": {
+      "name": "Event name",
+      "namePlaceholder": "e.g. Devoxx",
+      "venue": "Venue (optional)",
+      "venuePlaceholder": "e.g. Antwerp \u2013 Kinepolis",
+      "startsAt": "Starts",
+      "endsAt": "Ends"
+    },
+    "activity": {
+      "name": "Activity name",
+      "namePlaceholder": "e.g. CraneGrabberClawMachine",
+      "description": "Description (optional)",
+      "optional": "Optional \u2014 leave blank to add activities later."
+    },
+    "summary": {
+      "missing": "missing",
+      "skipped": "skipped"
+    }
+  },
+  "help": {
+    "title": "Help & glossary",
+    "intro": "OnePass organises in-person events as a small hierarchy: an Organisation hosts Events, each Event groups Activities, every Activity has Participants, and a Scan is recorded each time a Scanner badges a Participant for an Activity.",
+    "hierarchyTitle": "Domain hierarchy",
+    "entitiesTitle": "Concepts",
+    "org": {
+      "title": "Organisation",
+      "desc": "The top-level tenant. Owns events, members, branding and fair-use limits. You can be a member of several organisations and switch between them from the header.",
+      "bullet1": "<strong>Examples:</strong> Microsoft, Acme Corp, your community.",
+      "bullet2": "<strong>Owned by:</strong> the user who created it (Owner role).",
+      "bullet3": "<strong>Contains:</strong> Events, Members, Invitations."
+    },
+    "event": {
+      "title": "Event",
+      "desc": "A time-bounded gathering inside an organisation \u2014 a conference, expo, internal hackathon\u2026",
+      "bullet1": "<strong>Example:</strong> Devoxx 2026 (October 12\u201316, Antwerp).",
+      "bullet2": "<strong>Contains:</strong> one or more Activities, plus a default activity used by the Scan page."
+    },
+    "activity": {
+      "title": "Activity",
+      "desc": "A scannable thing inside an event: a booth game, a workshop, an entry checkpoint, a meal counter\u2026 Activities define when scans are accepted and how many scans each participant may receive.",
+      "bullet1": "<strong>Example:</strong> CraneGrabberClawMachine \u2014 the booth claw-machine game where each attendee is allowed exactly one play.",
+      "bullet2": "<strong>Time window:</strong> Starts / Ends timestamps gate when scans are accepted.",
+      "bullet3": "<strong>Max scans per participant:</strong> 1 by default, or unlimited."
+    },
+    "participant": {
+      "title": "Participant",
+      "desc": "A person who can be scanned for an activity. Identified by a badge code (QR / barcode) and an optional display name and email.",
+      "bullet1": "<strong>Example:</strong> Alice with badge A-001 attending Devoxx.",
+      "bullet2": "<strong>Created:</strong> ahead of time by import, or on the fly the first time their badge is scanned."
+    },
+    "scan": {
+      "title": "Scan",
+      "desc": "The atomic event recorded each time a Scanner badges a Participant for an Activity. Always carries who scanned, when, and from which device.",
+      "bullet1": "Scans are rejected if the activity window is closed or the per-participant cap is reached.",
+      "bullet2": "Offline scans are queued in the browser and replayed when connectivity returns."
+    },
+    "user": {
+      "title": "User & roles",
+      "desc": "A signed-in account. Each membership in an organisation carries one role:",
+      "role": {
+        "admin": "<strong>Admin / Owner</strong> \u2014 full configuration, can invite members and manage events, activities and users.",
+        "scanner": "<strong>Scanner</strong> \u2014 can record scans on the Scan page; cannot reconfigure the event.",
+        "viewer": "<strong>Viewer</strong> \u2014 read-only access to the dashboard."
+      }
+    },
+    "invitation": {
+      "title": "Invitation",
+      "desc": "A one-time link an Admin sends to add someone to an organisation with a chosen role. Invitations expire and can be revoked."
+    },
+    "exampleTitle": "A worked example",
+    "exampleIntro": "Putting it all together with a fictitious tenant:",
+    "exampleNarrative": "<strong>Microsoft</strong> (Organisation) sponsors a booth at <strong>Devoxx</strong> (Event). At the booth they run the <strong>CraneGrabberClawMachine</strong> activity, capped at one scan per badge so each attendee gets exactly one chance. A scanner-role staffer stands at the booth, opens the Scan page, and badges every player. Each scan creates a new Participant on first sight, then records the scan. Admins watch totals on the Dashboard in real time and export the CSV at the end of the day.",
+    "workflowTitle": "Typical workflow",
+    "workflow": {
+      "step1": "Create an <strong>Organisation</strong> (or accept an invitation to one).",
+      "step2": "Create an <strong>Event</strong> for the conference / gathering.",
+      "step3": "Add one or more <strong>Activities</strong> with their time window and per-participant scan cap.",
+      "step4": "<strong>Invite</strong> staff with the right role (Scanner for booth helpers, Admin for organisers).",
+      "step5": "On the day, scanners open the <strong>Scan</strong> page and badge participants \u2014 new participants are created automatically.",
+      "step6": "Admins follow live counters on the <strong>Dashboard</strong> and export results from there."
+    }
   }
 }

@@ -10,6 +10,11 @@
     "scan": "Escanear",
     "users": "Usuarios",
     "parameters": "Ajustes",
+    "profile": "Perfil",
+    "help": "Ayuda",
+    "setupWizard": "Asistente de configuración",
+    "globalAdmin": "Administración global",
+
     "logout": "Cerrar sesión",
     "login": "Iniciar sesión"
   },
@@ -28,13 +33,22 @@
     "continueWithMicrosoft": "Continuar con Microsoft",
     "googleFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
     "microsoftFailed": "No se pudo iniciar sesión con Microsoft. Inténtalo de nuevo.",
-    "accountDisabled": "Esta cuenta ha sido deshabilitada."
+    "accountDisabled": "Esta cuenta ha sido deshabilitada.",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "register": {
     "title": "Crear una cuenta",
     "email": "Correo electrónico",
     "username": "Nombre de usuario",
     "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "usernameChecking": "Comprobando disponibilidad\u2026",
+    "usernameAvailable": "Nombre de usuario disponible.",
+    "usernameTaken": "Este nombre de usuario ya está en uso.",
+    "usernameTooShort": "El nombre de usuario debe tener al menos 3 caracteres.",
+    "usernameCheckFailed": "No se pudo comprobar la disponibilidad.",
     "submit": "Registrarse",
     "hasAccount": "¿Ya tienes cuenta?",
     "login": "Iniciar sesión",
@@ -124,5 +138,163 @@
     "loading": "Cargando…",
     "error": "Algo salió mal.",
     "required": "Obligatorio"
+  },
+  "participants": {
+    "searchPlaceholder": "Buscar nombre, correo o id\u2026",
+    "filterPlaceholder": "Filtrar\u2026",
+    "pageSize": "Mostrar",
+    "countLabel": "Mostrando {{shown}} de {{filtered}} (total {{total}})",
+    "noResults": "Ningún participante coincide con los filtros.",
+    "actions": "Acciones",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Eliminar al participante \"{{name}}\" y todos sus escaneos en esta actividad?",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pageOf": "Página {{page}} de {{total}}"
+  },
+  "globalAdmin": {
+    "title": "Administración global",
+    "subtitle": "Ajustes reservados al operador de la plataforma OnePass. Solo visible para cuentas Admin globales.",
+    "statsTitle": "Resumen de la plataforma",
+    "orgsTotal": "Organizaciones",
+    "orgsActive": "Orgs activas",
+    "orgsSuspended": "Orgs suspendidas",
+    "usersTotal": "Usuarios",
+    "usersLocked": "Usuarios bloqueados",
+    "usersAdmins": "Admins globales",
+    "settingsTitle": "Ajustes de la plataforma",
+    "registrationOpen": "Permitir el autorregistro público",
+    "maintenanceMessage": "Banner de mantenimiento (visible en toda la app)",
+    "maintenancePlaceholder": "p. ej. Mantenimiento programado el domingo de 02:00 a 03:00 UTC\u2026",
+    "defaultRetentionDays": "Retención por defecto (días, 0 = nunca)",
+    "defaultLimits": "Límites de uso justo por defecto para nuevas organizaciones",
+    "maxEvents": "Eventos máx. / org",
+    "maxMembers": "Miembros máx. / org",
+    "maxScansPerMonth": "Escaneos máx. / mes",
+    "savedAt": "Guardado a las {{time}}",
+    "orgsTitle": "Organizaciones",
+    "orgsNone": "Todavía no se ha creado ninguna organización.",
+    "colName": "Nombre",
+    "colSlug": "Slug",
+    "colStatus": "Estado",
+    "colPlan": "Plan",
+    "colMembers": "Miembros",
+    "colCreated": "Creada",
+    "colActions": "Acciones",
+    "suspend": "Suspender",
+    "reactivate": "Reactivar",
+    "confirmStatus": "¿Cambiar esta organización al estado \"{{status}}\"?"
+  },
+  "wizard": {
+    "title": "Bienvenido a OnePass",
+    "progress": "Progreso de la configuración",
+    "skip": "Omitir por ahora",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "finish": "Finalizar configuración",
+    "step1": {
+      "title": "Paso 1 \u00b7 Tu organización",
+      "lead": "Configuremos tu tenant. La organización posee los eventos, los miembros y el branding."
+    },
+    "step2": {
+      "title": "Paso 2 \u00b7 Tu primer evento",
+      "lead": "Un evento agrupa las actividades que ocurren juntas \u2014 congreso, feria o jornada interna."
+    },
+    "step3": {
+      "title": "Paso 3 \u00b7 Actividad por defecto",
+      "lead": "Las actividades son las cosas escaneables dentro de un evento. Puedes añadirlas más tarde."
+    },
+    "step4": {
+      "title": "Paso 4 \u00b7 Revisión",
+      "lead": "Casi listo. Revisa tus opciones \u2014 lo crearemos todo de una vez."
+    },
+    "org": {
+      "name": "Nombre de la organización",
+      "namePlaceholder": "p.\u202fej. Microsoft",
+      "slug": "Slug de URL (opcional)",
+      "slugPlaceholder": "p.\u202fej. microsoft",
+      "slugHint": "Solo minúsculas y guiones. Déjalo vacío para derivarlo del nombre."
+    },
+    "event": {
+      "name": "Nombre del evento",
+      "namePlaceholder": "p.\u202fej. Devoxx",
+      "venue": "Sede (opcional)",
+      "venuePlaceholder": "p.\u202fej. Amberes \u2013 Kinepolis",
+      "startsAt": "Comienza",
+      "endsAt": "Termina"
+    },
+    "activity": {
+      "name": "Nombre de la actividad",
+      "namePlaceholder": "p.\u202fej. CraneGrabberClawMachine",
+      "description": "Descripción (opcional)",
+      "optional": "Opcional \u2014 déjalo vacío para añadir actividades más tarde."
+    },
+    "summary": {
+      "missing": "falta",
+      "skipped": "omitido"
+    }
+  },
+  "help": {
+    "title": "Ayuda y glosario",
+    "intro": "OnePass organiza los eventos presenciales como una pequeña jerarquía: una Organización acoge Eventos, cada Evento agrupa Actividades, cada Actividad tiene Participantes, y se registra un Escaneo cada vez que un Escáner identifica a un Participante en una Actividad.",
+    "hierarchyTitle": "Jerarquía del dominio",
+    "entitiesTitle": "Conceptos",
+    "org": {
+      "title": "Organización",
+      "desc": "El tenant raíz. Es propietario de eventos, miembros, branding y límites de uso justo. Puedes pertenecer a varias organizaciones y cambiar entre ellas desde la cabecera.",
+      "bullet1": "<strong>Ejemplos:</strong> Microsoft, Acme Corp, tu comunidad.",
+      "bullet2": "<strong>Propietario:</strong> el usuario que la creó (rol Owner).",
+      "bullet3": "<strong>Contiene:</strong> Eventos, Miembros, Invitaciones."
+    },
+    "event": {
+      "title": "Evento",
+      "desc": "Una reunión acotada en el tiempo dentro de una organización \u2014 congreso, feria, hackatón interno\u2026",
+      "bullet1": "<strong>Ejemplo:</strong> Devoxx 2026 (12-16 de octubre, Amberes).",
+      "bullet2": "<strong>Contiene:</strong> una o varias Actividades, más una actividad por defecto que usa la página de Escaneo."
+    },
+    "activity": {
+      "title": "Actividad",
+      "desc": "Algo escaneable dentro de un evento: juego de stand, taller, control de entrada, mostrador de comida\u2026 Las actividades definen cuándo se aceptan escaneos y cuántos puede recibir cada participante.",
+      "bullet1": "<strong>Ejemplo:</strong> CraneGrabberClawMachine \u2014 el juego de la máquina de pinza en el stand, donde cada asistente tiene derecho a exactamente una partida.",
+      "bullet2": "<strong>Ventana temporal:</strong> las marcas de inicio y fin controlan cuándo se aceptan escaneos.",
+      "bullet3": "<strong>Escaneos máximos por participante:</strong> 1 por defecto, o ilimitados."
+    },
+    "participant": {
+      "title": "Participante",
+      "desc": "Una persona que puede ser escaneada en una actividad. Identificada por un código de credencial (QR / código de barras), con nombre visible y correo opcionales.",
+      "bullet1": "<strong>Ejemplo:</strong> Alice con la credencial A-001 en Devoxx.",
+      "bullet2": "<strong>Creación:</strong> por importación previa o sobre la marcha en el primer escaneo."
+    },
+    "scan": {
+      "title": "Escaneo",
+      "desc": "El evento atómico que se registra cada vez que un Escáner identifica a un Participante en una Actividad. Siempre lleva quién escaneó, cuándo y desde qué dispositivo.",
+      "bullet1": "Los escaneos se rechazan si la ventana de la actividad está cerrada o se ha alcanzado el límite por participante.",
+      "bullet2": "Los escaneos sin conexión se ponen en cola en el navegador y se reenvían al volver la conexión."
+    },
+    "user": {
+      "title": "Usuario y roles",
+      "desc": "Una cuenta autenticada. Cada pertenencia a una organización lleva un rol:",
+      "role": {
+        "admin": "<strong>Admin / Owner</strong> \u2014 configuración total, puede invitar miembros y gestionar eventos, actividades y usuarios.",
+        "scanner": "<strong>Scanner</strong> \u2014 puede registrar escaneos en la página de Escaneo; no puede reconfigurar el evento.",
+        "viewer": "<strong>Viewer</strong> \u2014 acceso de solo lectura al panel."
+      }
+    },
+    "invitation": {
+      "title": "Invitación",
+      "desc": "Un enlace de un solo uso que un Admin envía para añadir a alguien a una organización con un rol concreto. Las invitaciones caducan y pueden revocarse."
+    },
+    "exampleTitle": "Un ejemplo completo",
+    "exampleIntro": "Todo junto con un tenant ficticio:",
+    "exampleNarrative": "<strong>Microsoft</strong> (Organización) patrocina un stand en <strong>Devoxx</strong> (Evento). En el stand corren la actividad <strong>CraneGrabberClawMachine</strong>, limitada a un escaneo por credencial para que cada asistente tenga exactamente una oportunidad. Una persona con rol Scanner está en el stand, abre la página de Escaneo y escanea a cada jugador. En el primer escaneo se crea un Participante y se registra el escaneo. Los Admins ven los totales en directo en el Panel y exportan el CSV al final del día.",
+    "workflowTitle": "Flujo típico",
+    "workflow": {
+      "step1": "Crea una <strong>Organización</strong> (o acepta una invitación).",
+      "step2": "Crea un <strong>Evento</strong> para el congreso o reunión.",
+      "step3": "Añade una o varias <strong>Actividades</strong> con su ventana temporal y el límite de escaneos por participante.",
+      "step4": "<strong>Invita</strong> al equipo con el rol adecuado (Scanner para el stand, Admin para la organización).",
+      "step5": "El día del evento, los escaneadores abren la página <strong>Escaneo</strong> y escanean a los participantes \u2014 los nuevos se crean automáticamente.",
+      "step6": "Los Admins siguen los contadores en directo en el <strong>Panel</strong> y exportan los resultados desde allí."
+    }
   }
 }

@@ -5,6 +5,7 @@ import { useAuth } from './auth';
 import { useOrg } from './org';
 import { api } from './api';
 import { LanguageSelect } from './LanguageSelect';
+import { FirstRunWizard } from './components/FirstRunWizard';
 
 /**
  * Top bar layout, three logical clusters:
@@ -25,6 +26,20 @@ export function AppLayout() {
   const [newOrgName, setNewOrgName] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  // Drives the first-run wizard: shown when an Admin signs in for the
+  // first time without belonging to any organisation. The "skip"
+  // affordance sets `wizardDismissed` so it does not pop again on every
+  // re-render — the user can always re-open it via the org switcher's
+  // "+ Create organisation…" entry.
+  const [wizardDismissed, setWizardDismissed] = useState(false);
+  // Manual trigger from the user menu ("Setup wizard") — lets an Admin
+  // re-open the configuration wizard at any time, even after their first
+  // organisation has been created, to spin up additional orgs/events.
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  const showFirstRunWizard =
+    wizardOpen ||
+    (!!username && role === 'Admin' && orgs.length === 0 && !wizardDismissed);
 
   useEffect(() => {
     if (!username || !active?.id) { setEventName(''); return; }
@@ -90,6 +105,7 @@ export function AppLayout() {
           <NavLink to="/activities">{t('nav.activities')}</NavLink>
           {role === 'Admin' && <NavLink to="/users">{t('nav.users')}</NavLink>}
           {role === 'Admin' && <NavLink to="/org/settings">{t('nav.orgSettings', 'Organisation')}</NavLink>}
+          {role === 'Admin' && <NavLink to="/admin/global">{t('nav.globalAdmin', 'Global admin')}</NavLink>}
           <NavLink to="/parameters">{t('nav.parameters')}</NavLink>
         </nav>
 
@@ -143,6 +159,19 @@ export function AppLayout() {
                 <Link role="menuitem" to="/profile" className="user-menu-item" onClick={() => setUserMenuOpen(false)}>
                   {t('nav.profile', 'Profile')}
                 </Link>
+                <Link role="menuitem" to="/help" className="user-menu-item" onClick={() => setUserMenuOpen(false)}>
+                  {t('nav.help', 'Help')}
+                </Link>
+                {role === 'Admin' && (
+                  <button
+                    role="menuitem"
+                    type="button"
+                    className="user-menu-item"
+                    onClick={() => { setUserMenuOpen(false); setWizardOpen(true); }}
+                  >
+                    {t('nav.setupWizard', 'Setup wizard')}
+                  </button>
+                )}
                 <button
                   role="menuitem"
                   type="button"
@@ -177,6 +206,9 @@ export function AppLayout() {
       <main className="app-main">
         <Outlet />
       </main>
+      {showFirstRunWizard && (
+        <FirstRunWizard onClose={() => { setWizardDismissed(true); setWizardOpen(false); }} />
+      )}
     </div>
   );
 }

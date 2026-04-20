@@ -19,6 +19,8 @@ import OrgSettingsPage from './pages/OrgSettingsPage';
 import OrgMembersPage from './pages/OrgMembersPage';
 import OrgInvitationsPage from './pages/OrgInvitationsPage';
 import ProfilePage from './pages/ProfilePage';
+import HelpPage from './pages/HelpPage';
+import GlobalAdminPage from './pages/GlobalAdminPage';
 import { CookieBanner } from './components/CookieBanner';
 import { installQueueFlushHandler } from './scanQueue';
 
@@ -42,9 +44,11 @@ createRoot(document.getElementById('root')!).render(
               <Route path="users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
               <Route path="parameters" element={<ParametersPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="help" element={<HelpPage />} />
               <Route path="org/settings" element={<RequireAdmin><OrgSettingsPage /></RequireAdmin>} />
               <Route path="org/members" element={<RequireAdmin><OrgMembersPage /></RequireAdmin>} />
               <Route path="org/invitations" element={<RequireAdmin><OrgInvitationsPage /></RequireAdmin>} />
+              <Route path="admin/global" element={<RequireAdmin><GlobalAdminPage /></RequireAdmin>} />
             </Route>
           </Routes>
           <CookieBanner />

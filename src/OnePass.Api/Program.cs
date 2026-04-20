@@ -47,6 +47,7 @@ builder.Services.AddSingleton<IMembershipService, MembershipService>();
 builder.Services.AddSingleton<IEventService, EventService>();
 builder.Services.AddSingleton<IInvitationService, InvitationService>();
 builder.Services.AddSingleton<IAuditService, AuditService>();
+builder.Services.AddSingleton<IPlatformSettingsService, PlatformSettingsService>();
 
 // ---------- Retention ----------
 var retention = new RetentionOptions();

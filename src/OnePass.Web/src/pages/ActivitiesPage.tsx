@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api, Activity, Participant } from '../api';
 import { useAuth } from '../auth';
 import { formatDate } from '../i18n';
+import { ParticipantsTable } from '../components/ParticipantsTable';
 
 export default function ActivitiesPage() {
   const { t, i18n } = useTranslation();
@@ -132,9 +133,16 @@ export default function ActivitiesPage() {
                   />
                   {t('activity.limitMaxScans')}
                 </label>
-                {limitScans ? (
-                  <input name="maxScans" type="number" min={1} defaultValue={100} aria-label={t('activity.maxScans')} style={{ width: '6rem', marginLeft: '0.25rem' }} />
-                ) : (
+                <input
+                  name="maxScans"
+                  type="number"
+                  min={1}
+                  defaultValue={100}
+                  disabled={!limitScans}
+                  aria-label={t('activity.maxScans')}
+                  style={{ width: '6rem', marginLeft: '0.25rem' }}
+                />
+                {!limitScans && (
                   <small style={{ color: 'var(--muted)' }}>{t('activity.unlimited')}</small>
                 )}
               </div>
@@ -255,14 +263,21 @@ export default function ActivitiesPage() {
             <input name="email" type="email" placeholder={t('activity.email')} style={{ maxWidth: 240 }} />
             <button type="submit">{t('activity.addParticipant')}</button>
           </form>
-          <table>
-            <thead><tr><th>{t('activity.displayName')}</th><th>ID</th><th>{t('activity.email')}</th></tr></thead>
-            <tbody>
-              {(participants[expanded] || []).map(p => (
-                <tr key={p.id}><td>{p.displayName}</td><td><code>{p.id}</code></td><td>{p.email}</td></tr>
-              ))}
-            </tbody>
-          </table>
+          <ParticipantsTable
+            participants={participants[expanded] || []}
+            canDelete={isAdmin}
+            onDelete={async (p) => {
+              try {
+                await api.deleteParticipant(expanded, p.id);
+                setParticipants(prev => ({
+                  ...prev,
+                  [expanded]: (prev[expanded] || []).filter(x => x.id !== p.id),
+                }));
+              } catch (err) {
+                setError(err instanceof Error ? err.message : t('common.error'));
+              }
+            }}
+          />
         </div>
       )}
     </>

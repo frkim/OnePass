@@ -144,8 +144,16 @@ export default function ScanPage() {
     <>
       <h1>{t('scan.title')}</h1>
       {message && (
-        <div className={`alert ${message.type}`}>
-          <div>{message.text}</div>
+        <div className={`alert ${message.type}`} role={message.type === 'error' || message.type === 'warning' ? 'alert' : 'status'}>
+          <div className="alert-row">
+            <span className="alert-icon" aria-hidden="true">
+              {message.type === 'success' && '✅'}
+              {message.type === 'warning' && '⚠️'}
+              {message.type === 'error' && '⛔'}
+              {message.type === 'info' && 'ℹ️'}
+            </span>
+            <span>{message.text}</span>
+          </div>
           {message.details && (
             <dl className="scan-details">
               <dt>{t('scan.detailsBadgeId')}</dt>
