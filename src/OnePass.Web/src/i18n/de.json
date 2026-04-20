@@ -19,7 +19,7 @@
     "login": "Anmelden"
   },
   "login": {
-    "title": "Bei OnePass anmelden",
+    "title": "Anmelden",
     "emailOrUsername": "E-Mail oder Benutzername",
     "password": "Passwort",
     "submit": "Anmelden",
@@ -35,7 +35,13 @@
     "microsoftFailed": "Microsoft-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
     "accountDisabled": "Dieses Konto wurde deaktiviert.",
     "showPassword": "Passwort anzeigen",
-    "hidePassword": "Passwort verbergen"
+    "hidePassword": "Passwort verbergen",
+    "marketingTitle": "Willkommen bei OnePass",
+    "marketingDesc": "OnePass ist die All-in-One-Plattform für Badge-Scanning und Aktivitätsverfolgung bei Präsenzveranstaltungen. Erstellen Sie Aktivitäten, laden Sie Ihr Team ein, scannen Sie Teilnehmer — und erhalten Sie Echtzeitanalysen, CSV-Exporte und eine offline-fähige Progressive Web App.",
+    "marketingFeature1": "Echtzeit-Scan-Tracking und Dashboards",
+    "marketingFeature2": "Funktioniert offline — Scans werden bei Verbindung synchronisiert",
+    "marketingFeature3": "Multi-Organisation und rollenbasierte Zugriffskontrolle",
+    "marketingFeature4": "CSV-Export und DSGVO-konforme Datenkontrollen"
   },
   "register": {
     "title": "Konto erstellen",
@@ -52,7 +58,10 @@
     "submit": "Registrieren",
     "hasAccount": "Schon ein Konto?",
     "login": "Anmelden",
-    "error": "Registrierung fehlgeschlagen"
+    "error": "Registrierung fehlgeschlagen",
+    "passwordMinLength": "Mindestens 8 Zeichen",
+    "passwordUppercase": "Mindestens ein Großbuchstabe",
+    "passwordSpecialChar": "Mindestens ein Sonderzeichen"
   },
   "dashboard": {
     "title": "Admin-Dashboard",

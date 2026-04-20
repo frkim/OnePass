@@ -183,6 +183,7 @@ export interface Invitation {
 export interface Me {
   id: string;
   username: string;
+  displayName?: string;
   role: string;
   language: string;
   allowedActivityIds: string[];
@@ -208,10 +209,10 @@ export const api = {
       `/api/auth/check-username?username=${encodeURIComponent(username)}`,
     ),
   me: () => request<Me>('/api/auth/me'),
-  setMyDefaultActivity: (defaultActivityId: string | null) =>
-    request<{ defaultActivityId: string | null }>('/api/auth/me', {
+  updateMe: (patch: { defaultActivityId?: string | null; displayName?: string; language?: string }) =>
+    request<{ defaultActivityId: string | null; displayName: string; language: string }>('/api/auth/me', {
       method: 'PATCH',
-      body: JSON.stringify({ defaultActivityId }),
+      body: JSON.stringify(patch),
     }),
   // NOTE: GET /api/auth/usernames was removed in the SaaS migration's Phase 0
   // hardening (account enumeration / OWASP A07). The login UI now requires

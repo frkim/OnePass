@@ -12,6 +12,7 @@ export default function ActivitiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [participants, setParticipants] = useState<Record<string, Participant[]>>({});
+  const [scanTimes, setScanTimes] = useState<Record<string, Record<string, string>>>({});
   const [limitScans, setLimitScans] = useState(false);
   // When non-null, the row whose name is currently being edited inline.
   // The buffered draft lives alongside the id so cancelling restores cleanly.
@@ -57,8 +58,16 @@ export default function ActivitiesPage() {
     if (expanded === id) { setExpanded(null); return; }
     setExpanded(id);
     if (!participants[id]) {
-      const p = await api.listParticipants(id);
+      const [p, scans] = await Promise.all([api.listParticipants(id), api.listScans(id)]);
       setParticipants(prev => ({ ...prev, [id]: p }));
+      // Build map: participantId → most recent scannedAt
+      const times: Record<string, string> = {};
+      for (const s of scans) {
+        if (!times[s.participantId] || s.scannedAt > times[s.participantId]) {
+          times[s.participantId] = s.scannedAt;
+        }
+      }
+      setScanTimes(prev => ({ ...prev, [id]: times }));
     }
   }
 
@@ -138,9 +147,8 @@ export default function ActivitiesPage() {
                   type="number"
                   min={1}
                   defaultValue={100}
-                  disabled={!limitScans}
                   aria-label={t('activity.maxScans')}
-                  style={{ width: '6rem', marginLeft: '0.25rem' }}
+                  style={{ width: '6rem', marginLeft: '0.25rem', display: limitScans ? undefined : 'none' }}
                 />
                 {!limitScans && (
                   <small style={{ color: 'var(--muted)' }}>{t('activity.unlimited')}</small>
@@ -266,6 +274,7 @@ export default function ActivitiesPage() {
           <ParticipantsTable
             participants={participants[expanded] || []}
             canDelete={isAdmin}
+            scanTimes={scanTimes[expanded]}
             onDelete={async (p) => {
               try {
                 await api.deleteParticipant(expanded, p.id);

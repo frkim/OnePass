@@ -11,15 +11,17 @@ import { useAuth } from '../auth';
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
   const { logout } = useAuth();
-  const [me, setMe] = useState<{ id: string; username: string; role: string; language: string } | null>(null);
+  const [me, setMe] = useState<{ id: string; username: string; displayName?: string; role: string; language: string } | null>(null);
   const [language, setLanguage] = useState(i18n.language);
+  const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
   useEffect(() => {
     api.me().then(u => {
-      setMe({ id: u.id, username: u.username, role: u.role, language: u.language });
+      setMe(u);
       setLanguage(u.language ?? i18n.language);
+      setDisplayName(u.displayName ?? u.username);
     }).catch(err => setError(err instanceof Error ? err.message : t('common.error')));
   }, [t, i18n.language]);
 
@@ -27,6 +29,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setError(null); setInfo(null);
     try {
+      await api.updateMe({ displayName, language });
       i18n.changeLanguage(language);
       setInfo(t('profile.saved', 'Profile updated.'));
     } catch (err) {
@@ -70,7 +73,7 @@ export default function ProfilePage() {
       <form className="card" onSubmit={onSave}>
         <div className="field">
           <label>{t('profile.username', 'Display name')}</label>
-          <input value={me.username} disabled />
+          <input value={displayName} onChange={e => setDisplayName(e.target.value)} maxLength={100} />
         </div>
         <div className="field">
           <label>{t('profile.role', 'Role')}</label>

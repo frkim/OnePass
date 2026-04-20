@@ -19,7 +19,7 @@
     "login": "Connexion"
   },
   "login": {
-    "title": "Connexion à OnePass",
+    "title": "Connexion",
     "emailOrUsername": "E-mail ou identifiant",
     "password": "Mot de passe",
     "submit": "Se connecter",
@@ -35,7 +35,13 @@
     "microsoftFailed": "Échec de la connexion Microsoft. Réessayez.",
     "accountDisabled": "Ce compte a été désactivé.",
     "showPassword": "Afficher le mot de passe",
-    "hidePassword": "Masquer le mot de passe"
+    "hidePassword": "Masquer le mot de passe",
+    "marketingTitle": "Bienvenue sur OnePass",
+    "marketingDesc": "OnePass est la plateforme tout-en-un de scan de badges et suivi d'activités pour les événements. Créez des activités, invitez votre équipe, scannez les participants — et obtenez des analyses en temps réel, des exports CSV et une application progressive fonctionnant hors ligne.",
+    "marketingFeature1": "Suivi des scans et tableaux de bord en temps réel",
+    "marketingFeature2": "Fonctionne hors ligne — les scans se synchronisent au retour",
+    "marketingFeature3": "Multi-organisation et contrôle d'accès par rôle",
+    "marketingFeature4": "Export CSV et contrôles de données RGPD"
   },
   "register": {
     "title": "Créer un compte",
@@ -52,7 +58,10 @@
     "submit": "S'inscrire",
     "hasAccount": "Déjà un compte ?",
     "login": "Se connecter",
-    "error": "L'inscription a échoué"
+    "error": "L'inscription a échoué",
+    "passwordMinLength": "Au moins 8 caractères",
+    "passwordUppercase": "Au moins une lettre majuscule",
+    "passwordSpecialChar": "Au moins un caractère spécial"
   },
   "dashboard": {
     "title": "Tableau de bord administrateur",

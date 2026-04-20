@@ -113,7 +113,7 @@ public class OrganizationsController : ControllerBase
         try
         {
             var slug = string.IsNullOrWhiteSpace(req.Slug) ? OrganizationService.NormaliseSlug(req.Name) : req.Slug!;
-            var org = await _orgs.CreateAsync(req.Name, slug, userId, ct);
+            var org = await _orgs.CreateAsync(req.Name, slug, userId, req.OrgId, ct);
             await _memberships.AddAsync(org.RowKey, userId, OrgRoles.OrgOwner, ct: ct);
             // Seed a default event so the org is immediately usable.
             await _events.CreateAsync(org.RowKey, $"{org.Name} default event", "default", userId, ct);

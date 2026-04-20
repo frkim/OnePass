@@ -24,7 +24,7 @@
     "login": "Sign in"
   },
   "login": {
-    "title": "Sign in to OnePass",
+    "title": "Sign in",
     "emailOrUsername": "Email or username",
     "password": "Password",
     "submit": "Sign in",
@@ -40,7 +40,13 @@
     "microsoftFailed": "Microsoft sign-in failed. Please try again.",
     "accountDisabled": "This account has been disabled.",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "marketingTitle": "Welcome to OnePass",
+    "marketingDesc": "OnePass is the all-in-one badge scanning & activity tracking platform for in-person events. Create activities, invite your team, scan participants at the door — and get real-time analytics, CSV exports, and a fully offline-capable progressive web app.",
+    "marketingFeature1": "Real-time scan tracking & dashboards",
+    "marketingFeature2": "Works offline — scans sync when back online",
+    "marketingFeature3": "Multi-organisation & role-based access",
+    "marketingFeature4": "CSV export & GDPR-ready data controls"
   },
   "register": {
     "title": "Create an account",
@@ -57,7 +63,10 @@
     "submit": "Register",
     "hasAccount": "Already have an account?",
     "login": "Sign in",
-    "error": "Registration failed"
+    "error": "Registration failed",
+    "passwordMinLength": "At least 8 characters",
+    "passwordUppercase": "At least one uppercase letter",
+    "passwordSpecialChar": "At least one special character"
   },
   "dashboard": {
     "title": "Admin dashboard",

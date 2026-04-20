@@ -304,6 +304,7 @@ public class AuthController : ControllerBase
         {
             id,
             username = User.Identity?.Name,
+            displayName = user?.DisplayName ?? User.Identity?.Name,
             role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
             language = User.FindFirst("lang")?.Value ?? "en",
             allowedActivityIds = user?.AllowedActivityIds ?? new List<string>(),
@@ -313,22 +314,35 @@ public class AuthController : ControllerBase
 
     [HttpPatch("me")]
     [Authorize]
-    public async Task<ActionResult<object>> UpdateMe([FromBody] UpdateUserRequest req, CancellationToken ct)
+    public async Task<ActionResult<object>> UpdateMe([FromBody] UpdateMeRequest req, CancellationToken ct)
     {
         var id = User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub);
         if (string.IsNullOrEmpty(id)) return Unauthorized();
         var user = await _users.GetByIdAsync(id, ct);
         if (user is null) return Unauthorized();
-        // A regular user can only update their own default activity.
+
         if (req.DefaultActivityId is not null)
         {
             var d = string.IsNullOrWhiteSpace(req.DefaultActivityId) ? null : req.DefaultActivityId.Trim();
             if (d is not null && user.AllowedActivityIds.Count > 0 && !user.AllowedActivityIds.Contains(d, StringComparer.Ordinal))
                 return BadRequest(new { error = "Default activity must be one of the allowed activities." });
             user.DefaultActivityId = d;
-            await _users.UpdateAsync(user, ct);
         }
-        return new { defaultActivityId = user.DefaultActivityId };
+        if (req.DisplayName is not null)
+        {
+            user.DisplayName = string.IsNullOrWhiteSpace(req.DisplayName) ? null : req.DisplayName.Trim();
+        }
+        if (req.Language is not null)
+        {
+            var lang = req.Language.Trim().ToLowerInvariant();
+            if (new[] { "en", "fr", "es", "de" }.Contains(lang))
+            {
+                user.PreferredLanguage = lang;
+                user.Locale = lang;
+            }
+        }
+        await _users.UpdateAsync(user, ct);
+        return new { defaultActivityId = user.DefaultActivityId, displayName = user.DisplayName ?? user.Username, language = user.PreferredLanguage };
     }
 
     /// <summary>

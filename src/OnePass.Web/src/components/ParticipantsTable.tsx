@@ -16,18 +16,20 @@ import { Participant } from '../api';
  */
 
 export type SortDir = 'asc' | 'desc';
-export type SortKey = 'displayName' | 'email' | 'id';
+export type SortKey = 'displayName' | 'email' | 'id' | 'lastScannedAt';
 
 interface ParticipantsTableProps {
   participants: Participant[];
   canDelete: boolean;
   onDelete?: (participant: Participant) => void | Promise<void>;
+  /** Map from participant id to their most recent scannedAt ISO string. */
+  scanTimes?: Record<string, string>;
 }
 
 const PAGE_SIZES = [20, 100, 200] as const;
 type PageSize = typeof PAGE_SIZES[number];
 
-export function ParticipantsTable({ participants, canDelete, onDelete }: ParticipantsTableProps) {
+export function ParticipantsTable({ participants, canDelete, onDelete, scanTimes }: ParticipantsTableProps) {
   const { t } = useTranslation();
 
   const [search, setSearch] = useState('');
@@ -68,8 +70,8 @@ export function ParticipantsTable({ participants, canDelete, onDelete }: Partici
     const arr = [...filtered];
     const dir = sortDir === 'asc' ? 1 : -1;
     arr.sort((a, b) => {
-      const va = (a[sortKey] ?? '').toString().toLowerCase();
-      const vb = (b[sortKey] ?? '').toString().toLowerCase();
+      const va = sortKey === 'lastScannedAt' ? (scanTimes?.[a.id] ?? '') : (a[sortKey] ?? '').toString().toLowerCase();
+      const vb = sortKey === 'lastScannedAt' ? (scanTimes?.[b.id] ?? '') : (b[sortKey] ?? '').toString().toLowerCase();
       if (va < vb) return -1 * dir;
       if (va > vb) return 1 * dir;
       return 0;
@@ -155,6 +157,16 @@ export function ParticipantsTable({ participants, canDelete, onDelete }: Partici
             >
               ID {sortIndicator('id')}
             </th>
+            {scanTimes && (
+              <th
+                role="columnheader"
+                aria-sort={ariaSort('lastScannedAt')}
+                onClick={() => toggleSort('lastScannedAt')}
+                className="sortable"
+              >
+                {t('participants.lastScanned', 'Last scanned')} {sortIndicator('lastScannedAt')}
+              </th>
+            )}
             {canDelete && <th aria-label={t('participants.actions') as string} />}
           </tr>
           <tr className="filter-row">
@@ -194,6 +206,9 @@ export function ParticipantsTable({ participants, canDelete, onDelete }: Partici
               <td>{p.displayName}</td>
               <td>{p.email}</td>
               <td><code>{p.id}</code></td>
+              {scanTimes && (
+                <td>{scanTimes[p.id] ? new Date(scanTimes[p.id]).toLocaleString() : '—'}</td>
+              )}
               {canDelete && (
                 <td style={{ textAlign: 'right' }}>
                   <button
@@ -214,7 +229,7 @@ export function ParticipantsTable({ participants, canDelete, onDelete }: Partici
           ))}
           {pageRows.length === 0 && (
             <tr>
-              <td colSpan={canDelete ? 4 : 3} style={{ color: 'var(--muted)' }}>
+              <td colSpan={canDelete ? (scanTimes ? 5 : 4) : (scanTimes ? 4 : 3)} style={{ color: 'var(--muted)' }}>
                 {t('participants.noResults')}
               </td>
             </tr>

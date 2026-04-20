@@ -65,7 +65,7 @@ export default function ParametersPage() {
     e.preventDefault();
     setError(null); setInfo(null);
     try {
-      await api.setMyDefaultActivity(myDefault || null);
+      await api.updateMe({ defaultActivityId: myDefault || null });
       setInfo(t('parameters.saved'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));

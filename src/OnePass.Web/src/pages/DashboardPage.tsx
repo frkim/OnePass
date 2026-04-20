@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bar } from 'react-chartjs-2';
 import { Chart, CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title } from 'chart.js';
-import { api, Activity, ActivityStats } from '../api';
+import { api, Activity, ActivityStats, getToken } from '../api';
 
 Chart.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title);
 
@@ -42,9 +42,21 @@ export default function DashboardPage() {
             {activities.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
           {selected && (
-            <a className="btn" href={api.reportCsvUrl(selected)} target="_blank" rel="noreferrer">
+            <button className="btn" type="button" onClick={async () => {
+              try {
+                const resp = await fetch(api.reportCsvUrl(selected), {
+                  headers: { 'Authorization': `Bearer ${getToken()}` },
+                });
+                if (!resp.ok) throw new Error('CSV export failed');
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'report.csv'; a.click();
+                URL.revokeObjectURL(url);
+              } catch { setError(t('common.error')); }
+            }}>
               {t('dashboard.exportCsv')}
-            </a>
+            </button>
           )}
         </div>
       </div>

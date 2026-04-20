@@ -7,6 +7,7 @@ namespace OnePass.Api.Services;
 public interface IOrganizationService
 {
     Task<OrganizationEntity> CreateAsync(string name, string slug, string ownerUserId, CancellationToken ct = default);
+    Task<OrganizationEntity> CreateAsync(string name, string slug, string ownerUserId, string? orgId, CancellationToken ct = default);
     Task<OrganizationEntity?> GetAsync(string orgId, CancellationToken ct = default);
     Task<OrganizationEntity?> GetBySlugAsync(string slug, CancellationToken ct = default);
     Task<IReadOnlyList<OrganizationEntity>> ListAsync(CancellationToken ct = default);
@@ -37,6 +38,9 @@ public sealed class OrganizationService : IOrganizationService
     // 0–38 inner chars including dashes + end char).
     private static readonly Regex SlugRegex = new("^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$", RegexOptions.Compiled);
 
+    // Org ID grammar: 1–24 chars, lowercase alphanumerics + underscores only.
+    private static readonly Regex OrgIdRegex = new("^[a-z0-9][a-z0-9_]{0,22}[a-z0-9]?$", RegexOptions.Compiled);
+
     private readonly ITableRepository<OrganizationEntity> _repo;
 
     public OrganizationService(ITableStoreFactory factory)
@@ -45,6 +49,9 @@ public sealed class OrganizationService : IOrganizationService
     }
 
     public async Task<OrganizationEntity> CreateAsync(string name, string slug, string ownerUserId, CancellationToken ct = default)
+        => await CreateAsync(name, slug, ownerUserId, orgId: null, ct);
+
+    public async Task<OrganizationEntity> CreateAsync(string name, string slug, string ownerUserId, string? orgId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Organisation name is required.", nameof(name));
         if (string.IsNullOrWhiteSpace(ownerUserId)) throw new ArgumentException("Owner user id is required.", nameof(ownerUserId));
@@ -54,11 +61,25 @@ public sealed class OrganizationService : IOrganizationService
         var existing = await GetBySlugAsync(normSlug, ct);
         if (existing is not null) throw new InvalidOperationException($"Slug '{normSlug}' is already in use.");
 
-        var orgId = Guid.NewGuid().ToString("N");
+        // If a custom org id was provided, validate and use it; otherwise generate one.
+        string resolvedOrgId;
+        if (!string.IsNullOrWhiteSpace(orgId))
+        {
+            var normId = orgId.Trim().ToLowerInvariant();
+            EnsureValidOrgId(normId);
+            var existingById = await GetAsync(normId, ct);
+            if (existingById is not null) throw new InvalidOperationException($"Organisation id '{normId}' is already in use.");
+            resolvedOrgId = normId;
+        }
+        else
+        {
+            resolvedOrgId = Guid.NewGuid().ToString("N");
+        }
+
         var org = new OrganizationEntity
         {
-            PartitionKey = orgId,
-            RowKey = orgId,
+            PartitionKey = resolvedOrgId,
+            RowKey = resolvedOrgId,
             Name = name.Trim(),
             Slug = normSlug,
             OwnerUserId = ownerUserId,
@@ -142,5 +163,17 @@ public sealed class OrganizationService : IOrganizationService
             throw new ArgumentException("Slug must be 1–40 lowercase alphanumeric characters or dashes (no leading/trailing dash).", nameof(slug));
         if (ReservedSlugs.Contains(slug))
             throw new ArgumentException($"Slug '{slug}' is reserved.", nameof(slug));
+    }
+
+    public static void EnsureValidOrgId(string orgId)
+    {
+        if (string.IsNullOrEmpty(orgId))
+            throw new ArgumentException("Organisation id is required.", nameof(orgId));
+        if (orgId.Length > 24)
+            throw new ArgumentException("Organisation id must be 24 characters or less.", nameof(orgId));
+        if (!OrgIdRegex.IsMatch(orgId))
+            throw new ArgumentException("Organisation id must contain only lowercase alphanumeric characters and underscores.", nameof(orgId));
+        if (ReservedSlugs.Contains(orgId))
+            throw new ArgumentException($"Organisation id '{orgId}' is reserved.", nameof(orgId));
     }
 }

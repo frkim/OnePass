@@ -58,6 +58,10 @@ public sealed class UserService : IUserService
         if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email required", nameof(email));
         if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
             throw new ArgumentException("Password must be at least 8 characters", nameof(password));
+        if (!password.Any(char.IsUpper))
+            throw new ArgumentException("Password must contain at least one uppercase letter", nameof(password));
+        if (!password.Any(c => !char.IsLetterOrDigit(c)))
+            throw new ArgumentException("Password must contain at least one special character", nameof(password));
         if (!Roles.All.Contains(role))
             throw new ArgumentException($"Unknown role '{role}'", nameof(role));
 

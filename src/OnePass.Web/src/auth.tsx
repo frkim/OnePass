@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react';
 import { api, getToken, setToken } from './api';
+import i18n from './i18n';
 
 interface AuthState {
   userId: string | null;
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const me = await api.me();
+      if (me.language) i18n.changeLanguage(me.language);
       setState({ userId: me.id, username: me.username, role: me.role, loading: false });
     } catch {
       setToken(null);

@@ -40,6 +40,20 @@ export default function LoginPage() {
 
   return (
     <div className="login-wrapper">
+      <div className="login-pair">
+      <div className="login-info card">
+        <div className="login-info-header">
+          <img src="/favicon.svg" alt="" className="login-info-logo" />
+          <h1>{t('login.marketingTitle', 'Welcome to OnePass')}</h1>
+        </div>
+        <p>{t('login.marketingDesc', 'OnePass is the all-in-one badge scanning & activity tracking platform for in-person events. Create activities, invite your team, scan participants at the door — and get real-time analytics, CSV exports, and a fully offline-capable progressive web app.')}</p>
+        <ul className="login-info-features">
+          <li>{t('login.marketingFeature1', 'Real-time scan tracking & dashboards')}</li>
+          <li>{t('login.marketingFeature2', 'Works offline — scans sync when back online')}</li>
+          <li>{t('login.marketingFeature3', 'Multi-organisation & role-based access')}</li>
+          <li>{t('login.marketingFeature4', 'CSV export & GDPR-ready data controls')}</li>
+        </ul>
+      </div>
       <form className="card login-card" onSubmit={onSubmit} aria-label={t('login.title')}>
         <div className="login-header">
           <img src="/favicon.svg" alt="" className="login-logo" />
@@ -161,6 +175,7 @@ export default function LoginPage() {
           {t('login.noAccount')} <Link to="/register">{t('login.register')}</Link>
         </p>
         </form>
+      </div>
     </div>
   );
 }

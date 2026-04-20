@@ -16,6 +16,8 @@ public class UserEntity : IEntity
 
     public string Email { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
+    /// <summary>User-chosen display name. Falls back to Username if null/empty.</summary>
+    public string? DisplayName { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
     public string Role { get; set; } = Roles.User;
     public bool IsActive { get; set; } = true;

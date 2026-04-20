@@ -19,7 +19,7 @@
     "login": "Iniciar sesión"
   },
   "login": {
-    "title": "Inicia sesión en OnePass",
+    "title": "Iniciar sesión",
     "emailOrUsername": "Correo o usuario",
     "password": "Contraseña",
     "submit": "Iniciar sesión",
@@ -35,7 +35,13 @@
     "microsoftFailed": "No se pudo iniciar sesión con Microsoft. Inténtalo de nuevo.",
     "accountDisabled": "Esta cuenta ha sido deshabilitada.",
     "showPassword": "Mostrar contraseña",
-    "hidePassword": "Ocultar contraseña"
+    "hidePassword": "Ocultar contraseña",
+    "marketingTitle": "Bienvenido a OnePass",
+    "marketingDesc": "OnePass es la plataforma integral de escaneo de credenciales y seguimiento de actividades para eventos presenciales. Crea actividades, invita a tu equipo, escanea participantes — y obtén análisis en tiempo real, exportaciones CSV y una app progresiva que funciona sin conexión.",
+    "marketingFeature1": "Seguimiento de escaneos y paneles en tiempo real",
+    "marketingFeature2": "Funciona sin conexión — los escaneos se sincronizan al volver",
+    "marketingFeature3": "Multi-organización y control de acceso por roles",
+    "marketingFeature4": "Exportación CSV y controles de datos RGPD"
   },
   "register": {
     "title": "Crear una cuenta",
@@ -52,7 +58,10 @@
     "submit": "Registrarse",
     "hasAccount": "¿Ya tienes cuenta?",
     "login": "Iniciar sesión",
-    "error": "Error en el registro"
+    "error": "Error en el registro",
+    "passwordMinLength": "Al menos 8 caracteres",
+    "passwordUppercase": "Al menos una letra mayúscula",
+    "passwordSpecialChar": "Al menos un carácter especial"
   },
   "dashboard": {
     "title": "Panel de administración",

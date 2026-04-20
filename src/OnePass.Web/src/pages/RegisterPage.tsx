@@ -49,11 +49,15 @@ export default function RegisterPage() {
   }, [username]);
 
   const passwordsMatch = password.length === 0 || password === confirmPassword;
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+  const passwordValid = hasMinLength && hasUppercase && hasSpecialChar;
   const canSubmit =
     !busy &&
     passwordsMatch &&
     confirmPassword.length > 0 &&
-    password.length >= 8 &&
+    passwordValid &&
     (usernameStatus === 'available' || usernameStatus === 'idle');
 
   async function onSubmit(e: FormEvent) {
@@ -158,6 +162,13 @@ export default function RegisterPage() {
               {eyeIcon}
             </button>
           </span>
+          {password.length > 0 && !passwordValid && (
+            <div className="field-hint error" id="pwd-hint">
+              {!hasMinLength && <div>{t('register.passwordMinLength', 'At least 8 characters')}</div>}
+              {!hasUppercase && <div>{t('register.passwordUppercase', 'At least one uppercase letter')}</div>}
+              {!hasSpecialChar && <div>{t('register.passwordSpecialChar', 'At least one special character')}</div>}
+            </div>
+          )}
         </div>
         <div className="field">
           <label htmlFor="pwd2">{t('register.confirmPassword')}</label>

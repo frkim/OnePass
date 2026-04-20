@@ -26,6 +26,12 @@ public record UpdateUserRequest(
     string? DefaultActivityId = null,
     IReadOnlyList<string>? AllowedActivityIds = null);
 
+/// <summary>Payload for PATCH /api/auth/me — user self-service profile update.</summary>
+public record UpdateMeRequest(
+    string? DefaultActivityId = null,
+    string? DisplayName = null,
+    string? Language = null);
+
 public record CreateActivityRequest(
     string Name,
     string? Description,
@@ -67,7 +73,7 @@ public record OrganizationResponse(
     string? BrandingLogoUrl,
     string? BrandingPrimaryColor);
 
-public record CreateOrganizationRequest(string Name, string? Slug);
+public record CreateOrganizationRequest(string Name, string? Slug, string? OrgId = null);
 public record UpdateOrganizationRequest(
     string? Name = null,
     string? Slug = null,
