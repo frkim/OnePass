@@ -43,4 +43,22 @@ public class OrganizationEntity : IEntity
 
     /// <summary>Slug used **before** the most recent rename, for 301 redirects.</summary>
     public string? PreviousSlug { get; set; }
+
+    /// <summary>
+    /// Fair-use caps applied per organisation (Phase 7 — anti-abuse, not
+    /// commercial). All defaults are intentionally generous to cover real
+    /// in-person events; the <see cref="Auth.TenantPolicies.EnforceFairUse"/>
+    /// policy returns 429 with a friendly message when these are exceeded.
+    /// </summary>
+    public OrganizationLimits Limits { get; set; } = new();
+}
+
+public class OrganizationLimits
+{
+    /// <summary>Maximum number of events one organisation can host.</summary>
+    public int MaxEvents { get; set; } = 50;
+    /// <summary>Maximum number of members one organisation can have.</summary>
+    public int MaxMembers { get; set; } = 200;
+    /// <summary>Maximum number of scans recorded per calendar month, summed across the org.</summary>
+    public int MaxScansPerMonth { get; set; } = 100_000;
 }

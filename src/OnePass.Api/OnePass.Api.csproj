@@ -10,7 +10,10 @@
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="10.0.*" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.55.0" />
     <!-- Newtonsoft.Json is required by Microsoft.Azure.Cosmos even when using the System.Text.Json serializer. -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

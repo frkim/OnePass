@@ -9,6 +9,15 @@ public interface IUserService
     Task<UserEntity?> GetByIdAsync(string id, CancellationToken ct = default);
     Task<UserEntity> CreateAsync(string email, string username, string password, string role, CancellationToken ct = default);
     Task<UserEntity> CreateAsync(string email, string username, string password, string role, IReadOnlyList<string>? allowedActivityIds, string? defaultActivityId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Find an existing user by email; if none exists, JIT-provision one
+    /// for an external/federated identity (e.g. Google). The new user gets
+    /// the regular <see cref="Roles.User"/> role and a random password
+    /// hash they can never know — they must keep using the federated
+    /// provider, or trigger a password-reset (planned, Phase L).
+    /// </summary>
+    Task<UserEntity> EnsureExternalAsync(string email, string? displayName, string provider, string providerSubject, CancellationToken ct = default);
     Task<IReadOnlyList<UserEntity>> ListAsync(CancellationToken ct = default);
     Task UpdateAsync(UserEntity user, CancellationToken ct = default);
     Task DeleteAsync(string id, CancellationToken ct = default);
@@ -88,4 +97,50 @@ public sealed class UserService : IUserService
     public bool VerifyPassword(UserEntity user, string password) =>
         !string.IsNullOrEmpty(user.PasswordHash) &&
         BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+
+    public async Task<UserEntity> EnsureExternalAsync(string email, string? displayName, string provider, string providerSubject, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email required", nameof(email));
+        if (string.IsNullOrWhiteSpace(provider)) throw new ArgumentException("Provider required", nameof(provider));
+        if (string.IsNullOrWhiteSpace(providerSubject)) throw new ArgumentException("Provider subject required", nameof(providerSubject));
+
+        var normalisedEmail = email.Trim().ToLowerInvariant();
+        var existing = await FindByEmailOrUsernameAsync(normalisedEmail, ct);
+        if (existing is not null)
+        {
+            if (!existing.IsActive)
+                throw new InvalidOperationException("Account is disabled.");
+            return existing;
+        }
+
+        // Pick a username we know is unique. Use the local-part of the email
+        // as a starting point and fall back to a numbered variant on conflict.
+        var baseUsername = normalisedEmail.Split('@')[0];
+        var username = baseUsername;
+        var suffix = 1;
+        while (await FindByEmailOrUsernameAsync(username, ct) is not null)
+        {
+            suffix++;
+            username = $"{baseUsername}{suffix}";
+            if (suffix > 1000)
+                throw new InvalidOperationException("Could not allocate a unique username for federated sign-in.");
+        }
+
+        // The user can never log in with a password — they must keep using
+        // the federated provider. We still write a random hash so the
+        // PasswordHash column is never null and BCrypt.Verify will always
+        // fail in constant time even if the row is exfiltrated.
+        var randomPassword = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+        var user = new UserEntity
+        {
+            Email = normalisedEmail,
+            Username = string.IsNullOrWhiteSpace(displayName) ? username : displayName.Trim(),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(randomPassword),
+            Role = Roles.User,
+            AllowedActivityIds = new List<string>(),
+            DefaultActivityId = null,
+        };
+        await _users.UpsertAsync(user, ct);
+        return user;
+    }
 }

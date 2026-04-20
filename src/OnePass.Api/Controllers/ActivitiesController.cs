@@ -17,20 +17,17 @@ public class ActivitiesController : ControllerBase
     private readonly IActivityService _activities;
     private readonly IParticipantService _participants;
     private readonly IScanService _scans;
-    private readonly ISettingsService _settings;
     private readonly Repositories.ITableStoreFactory _factory;
 
     public ActivitiesController(
         IActivityService activities,
         IParticipantService participants,
         IScanService scans,
-        ISettingsService settings,
         Repositories.ITableStoreFactory factory)
     {
         _activities = activities;
         _participants = participants;
         _scans = scans;
-        _settings = settings;
         _factory = factory;
     }
 
@@ -38,8 +35,7 @@ public class ActivitiesController : ControllerBase
     public async Task<ActionResult<IEnumerable<ActivityResponse>>> List(CancellationToken ct)
     {
         var list = await _activities.ListAsync(ct);
-        var settings = await _settings.GetAsync(ct);
-        return Ok(list.Select(a => Map(a, settings.DefaultActivityId)));
+        return Ok(list.Select(Map));
     }
 
     [HttpGet("{id}")]
@@ -47,8 +43,7 @@ public class ActivitiesController : ControllerBase
     {
         var a = await _activities.GetAsync(id, ct);
         if (a is null) return NotFound();
-        var settings = await _settings.GetAsync(ct);
-        return Map(a, settings.DefaultActivityId);
+        return Map(a);
     }
 
     [HttpPost]
@@ -68,8 +63,7 @@ public class ActivitiesController : ControllerBase
                 CreatedByUserId = userId,
             };
             var created = await _activities.CreateAsync(entity, ct);
-            var settings = await _settings.GetAsync(ct);
-            return CreatedAtAction(nameof(Get), new { id = created.RowKey }, Map(created, settings.DefaultActivityId));
+            return CreatedAtAction(nameof(Get), new { id = created.RowKey }, Map(created));
         }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
@@ -83,11 +77,24 @@ public class ActivitiesController : ControllerBase
         if (existing.Count <= 1)
             return Conflict(new { error = "At least one activity must always exist." });
         await DeleteActivityCascadeAsync(id, ct);
-        // If the deleted activity was the global default, clear the setting.
-        var settings = await _settings.GetAsync(ct);
-        if (string.Equals(settings.DefaultActivityId, id, StringComparison.Ordinal))
-            await _settings.UpdateAsync(null, "", ct);
         return NoContent();
+    }
+
+    /// <summary>Renames an existing activity. Admin-only.</summary>
+    [HttpPatch("{id}")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<ActionResult<ActivityResponse>> Update(string id, [FromBody] UpdateActivityRequest req, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(req.Name))
+            return BadRequest(new { error = "No supported fields to update." });
+        try
+        {
+            var updated = await _activities.RenameAsync(id, req.Name, ct);
+            return Ok(Map(updated));
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
     }
 
     /// <summary>Deletes all participants and scans for the activity (the activity itself is preserved).</summary>
@@ -219,7 +226,6 @@ public class ActivitiesController : ControllerBase
         return needsQuote ? $"\"{v.Replace("\"", "\"\"")}\"" : v;
     }
 
-    private static ActivityResponse Map(ActivityEntity a, string? globalDefaultId) =>
-        new(a.RowKey, a.Name, a.Description, a.StartsAt, a.EndsAt, a.MaxScansPerParticipant, a.IsActive,
-            string.Equals(a.RowKey, globalDefaultId, StringComparison.Ordinal));
+    private static ActivityResponse Map(ActivityEntity a) =>
+        new(a.RowKey, a.Name, a.Description, a.StartsAt, a.EndsAt, a.MaxScansPerParticipant, a.IsActive, a.IsDefault);
 }

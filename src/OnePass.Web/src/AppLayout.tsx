@@ -1,11 +1,21 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { NavLink, Outlet, Navigate } from 'react-router-dom';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { NavLink, Outlet, Navigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './auth';
 import { useOrg } from './org';
 import { api } from './api';
 import { LanguageSelect } from './LanguageSelect';
 
+/**
+ * Top bar layout, three logical clusters:
+ *   1. Brand + active-org/event chip (left)
+ *   2. Primary navigation (center, wraps to a second row on narrow viewports)
+ *   3. Account tools — org switcher, language, user menu (right)
+ *
+ * The user menu collapses Username / Role / Profile / Sign out into a
+ * single dropdown so the bar stays readable on small screens and the
+ * destructive "Sign out" action is no longer the most prominent control.
+ */
 export function AppLayout() {
   const { t } = useTranslation();
   const { username, role, logout, loading } = useAuth();
@@ -13,11 +23,35 @@ export function AppLayout() {
   const [eventName, setEventName] = useState<string>('');
   const [creating, setCreating] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!username) return;
-    api.getSettings().then(s => setEventName(s.eventName ?? '')).catch(() => { /* ignore */ });
+    if (!username || !active?.id) { setEventName(''); return; }
+    // Header subtitle now reflects the active org's first/active event so
+    // every tenant sees their own context (legacy /api/settings is gone).
+    api.listEvents(active.id)
+      .then(list => {
+        const live = list.find(e => !e.isArchived) ?? list[0];
+        setEventName(live?.name ?? '');
+      })
+      .catch(() => { /* ignore: header subtitle is best-effort */ });
   }, [username, active?.id]);
+
+  // Close the user menu when clicking elsewhere or pressing Escape.
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    function onClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setUserMenuOpen(false); }
+    window.addEventListener('mousedown', onClick);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onClick);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [userMenuOpen]);
 
   if (loading) return <div style={{ padding: '2rem' }}>{t('common.loading')}</div>;
   if (!username) return <Navigate to="/login" replace />;
@@ -38,47 +72,89 @@ export function AppLayout() {
     }
   }
 
+  const initials = (username || '?').slice(0, 2).toUpperCase();
+
   return (
     <div className="app-shell">
       <header className="app-header">
-        <NavLink to="/" className="brand" aria-label={t('nav.scan')}>
-          <img src="/favicon.svg" alt="" />
-          <span>{t('app.title')}</span>
-        </NavLink>
-        {active && (
-          <span style={{ color: 'var(--muted)', fontWeight: 600, fontSize: '0.95rem' }} title="Active organisation">
-            · {active.name}{eventName ? ` · ${eventName}` : ''}
-          </span>
-        )}
-        <nav>
+        <div className="app-header-left">
+          <NavLink to="/" className="brand" aria-label={t('nav.scan')}>
+            <img src="/favicon.svg" alt="" />
+            <span>{t('app.title')}</span>
+          </NavLink>
+        </div>
+
+        <nav className="app-header-nav" aria-label={t('nav.primary', 'Primary') as string}>
           <NavLink to="/" end>{t('nav.scan')}</NavLink>
           {role === 'Admin' && <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>}
           <NavLink to="/activities">{t('nav.activities')}</NavLink>
           {role === 'Admin' && <NavLink to="/users">{t('nav.users')}</NavLink>}
+          {role === 'Admin' && <NavLink to="/org/settings">{t('nav.orgSettings', 'Organisation')}</NavLink>}
           <NavLink to="/parameters">{t('nav.parameters')}</NavLink>
         </nav>
-        <div className="spacer" />
-        {orgs.length > 0 && (
-          <select
-            aria-label="Active organisation"
-            value={active?.id ?? ''}
-            onChange={e => {
-              if (e.target.value === '__new') { setCreating(true); return; }
-              switchOrg(e.target.value);
-            }}
-            style={{ minWidth: '12rem' }}
-          >
-            {orgs.map(o => (
-              <option key={o.id} value={o.id}>
-                {o.name} ({o.role})
-              </option>
-            ))}
-            <option value="__new">+ Create organisation…</option>
-          </select>
-        )}
-        <LanguageSelect />
-        <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{username} ({role})</span>
-        <button className="secondary" onClick={logout}>{t('nav.logout')}</button>
+
+        <div className="app-header-right">
+          {orgs.length > 0 && (
+            <div className="org-stack">
+              {active && (
+                <div className="org-chip" title={t('nav.activeOrg', 'Active organisation') as string}>
+                  <span className="org-chip-name">{active.name}</span>
+                  {eventName && <span className="org-chip-event">{eventName}</span>}
+                </div>
+              )}
+              <select
+                className="org-switcher"
+                aria-label={t('nav.activeOrg', 'Active organisation') as string}
+                value={active?.id ?? ''}
+                onChange={e => {
+                  if (e.target.value === '__new') { setCreating(true); return; }
+                  switchOrg(e.target.value);
+                }}
+              >
+                {orgs.map(o => (
+                  <option key={o.id} value={o.id}>
+                    {o.name} ({o.role})
+                  </option>
+                ))}
+                <option value="__new">{t('nav.createOrg', '+ Create organisation…')}</option>
+              </select>
+            </div>
+          )}
+          <LanguageSelect />
+          <div className="user-menu" ref={userMenuRef}>
+            <button
+              type="button"
+              className="user-menu-trigger"
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+              onClick={() => setUserMenuOpen(o => !o)}
+              title={`${username} (${role})`}
+            >
+              <span className="user-avatar" aria-hidden="true">{initials}</span>
+              <span className="user-menu-name">{username}</span>
+              <span className="user-menu-caret" aria-hidden="true">▾</span>
+            </button>
+            {userMenuOpen && (
+              <div className="user-menu-panel" role="menu">
+                <div className="user-menu-header">
+                  <div className="user-menu-username">{username}</div>
+                  <div className="user-menu-role">{role}</div>
+                </div>
+                <Link role="menuitem" to="/profile" className="user-menu-item" onClick={() => setUserMenuOpen(false)}>
+                  {t('nav.profile', 'Profile')}
+                </Link>
+                <button
+                  role="menuitem"
+                  type="button"
+                  className="user-menu-item user-menu-item-danger"
+                  onClick={() => { setUserMenuOpen(false); logout(); }}
+                >
+                  {t('nav.logout')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </header>
       {creating && (
         <form
@@ -87,13 +163,15 @@ export function AppLayout() {
         >
           <input
             autoFocus
-            placeholder="Organisation name"
+            placeholder={t('nav.newOrgPlaceholder', 'Organisation name') as string}
             value={newOrgName}
             onChange={e => setNewOrgName(e.target.value)}
             style={{ flex: 1 }}
           />
-          <button type="submit">Create</button>
-          <button type="button" className="secondary" onClick={() => { setCreating(false); setNewOrgName(''); }}>Cancel</button>
+          <button type="submit">{t('common.create', 'Create')}</button>
+          <button type="button" className="secondary" onClick={() => { setCreating(false); setNewOrgName(''); }}>
+            {t('common.cancel', 'Cancel')}
+          </button>
         </form>
       )}
       <main className="app-main">

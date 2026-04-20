@@ -9,7 +9,13 @@
     "activities": "Activities",
     "scan": "Scan",
     "users": "Users",
-    "parameters": "Parameters",
+    "parameters": "Settings",
+    "orgSettings": "Organisation",
+    "profile": "Profile",
+    "activeOrg": "Active organisation",
+    "createOrg": "+ Create organisation…",
+    "newOrgPlaceholder": "Organisation name",
+    "primary": "Primary",
     "logout": "Sign out",
     "login": "Sign in"
   },
@@ -22,7 +28,13 @@
     "welcome": "Welcome back",
     "noAccount": "Don't have an account?",
     "register": "Register",
-    "stayConnected": "Stay connected"
+    "stayConnected": "Stay connected",
+    "orContinueWith": "or continue with",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithMicrosoft": "Continue with Microsoft",
+    "googleFailed": "Google sign-in failed. Please try again.",
+    "microsoftFailed": "Microsoft sign-in failed. Please try again.",
+    "accountDisabled": "This account has been disabled."
   },
   "register": {
     "title": "Create an account",
@@ -62,7 +74,10 @@
     "resetScans": "Reset scans",
     "resetScansConfirm": "Delete all participants and scans for activity \"{{name}}\"?",
     "resetScansSuccess": "Reset done: {{p}} participants, {{s}} scans deleted.",
-    "cannotDeleteLast": "At least one activity must always exist."
+    "cannotDeleteLast": "At least one activity must always exist.",
+    "rename": "Rename",
+    "renameTitle": "Rename activity",
+    "renameNewName": "New name"
   },
   "scan": {
     "title": "Scan participant",
@@ -99,7 +114,7 @@
     "selectAtLeastOneActivity": "Select at least one activity"
   },
   "parameters": {
-    "title": "Parameters",
+    "title": "Settings",
     "eventName": "Event name",
     "eventNameHelp": "Public-facing name shown across the application.",
     "defaultActivity": "Default activity",

@@ -10,6 +10,8 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login: (emailOrUsername: string, password: string, remember?: boolean) => Promise<void>;
+  /** Install a JWT obtained via an external sign-in flow (e.g. Google) and rehydrate auth state. */
+  acceptToken: (token: string, remember?: boolean) => Promise<void>;
   logout: () => void;
 }
 
@@ -42,14 +44,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ userId: r.userId, username: r.username, role: r.role, loading: false });
   }, []);
 
+  const acceptToken = useCallback(async (token: string, remember = true) => {
+    setToken(token, remember);
+    // Force a /me round-trip so we pick up the role + username for the
+    // freshly-issued JWT and the rest of the app sees a logged-in user.
+    await refresh();
+  }, [refresh]);
+
   const logout = useCallback(() => {
     setToken(null);
     setState({ userId: null, username: null, role: null, loading: false });
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, logout }),
-    [state, login, logout],
+    () => ({ ...state, login, acceptToken, logout }),
+    [state, login, acceptToken, logout],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

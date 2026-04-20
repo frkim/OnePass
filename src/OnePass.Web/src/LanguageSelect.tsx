@@ -29,9 +29,32 @@ function FlagFR({ size = 20 }: { size?: number }) {
   );
 }
 
+function FlagES({ size = 20 }: { size?: number }) {
+  const h = Math.round(size * 0.6);
+  return (
+    <svg width={size} height={h} viewBox="0 0 3 2" aria-hidden="true">
+      <rect width="3" height="2" fill="#AA151B" />
+      <rect width="3" height="1" y="0.5" fill="#F1BF00" />
+    </svg>
+  );
+}
+
+function FlagDE({ size = 20 }: { size?: number }) {
+  const h = Math.round(size * 0.6);
+  return (
+    <svg width={size} height={h} viewBox="0 0 5 3" aria-hidden="true">
+      <rect width="5" height="1" y="0" fill="#000" />
+      <rect width="5" height="1" y="1" fill="#DD0000" />
+      <rect width="5" height="1" y="2" fill="#FFCE00" />
+    </svg>
+  );
+}
+
 const LANGS: { code: string; label: string; Flag: (p: { size?: number }) => ReactElement }[] = [
   { code: 'en', label: 'English', Flag: FlagGB },
   { code: 'fr', label: 'Français', Flag: FlagFR },
+  { code: 'es', label: 'Español', Flag: FlagES },
+  { code: 'de', label: 'Deutsch', Flag: FlagDE },
 ];
 
 export function LanguageSelect() {

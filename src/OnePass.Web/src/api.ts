@@ -117,11 +117,6 @@ export interface AppUser {
   defaultActivityId?: string | null;
 }
 
-export interface Settings {
-  eventName: string;
-  defaultActivityId?: string | null;
-}
-
 // ---- SaaS multi-tenant types ----
 export interface OrgSummary {
   id: string;
@@ -197,6 +192,8 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, username, password, role: 'User' }),
     }),
+  /** Discovery endpoint listing the federated identity providers wired in this environment. */
+  getProviders: () => request<{ google: boolean; microsoft: boolean }>('/api/auth/providers'),
   me: () => request<Me>('/api/auth/me'),
   setMyDefaultActivity: (defaultActivityId: string | null) =>
     request<{ defaultActivityId: string | null }>('/api/auth/me', {
@@ -230,6 +227,8 @@ export const api = {
     request<Membership[]>(`/api/orgs/${orgId}/memberships`),
   updateMembership: (orgId: string, userId: string, patch: Partial<Omit<Membership, 'orgId' | 'userId' | 'joinedAt'>>) =>
     request<Membership>(`/api/orgs/${orgId}/memberships/${userId}`, { method: 'PATCH', body: JSON.stringify(patch) }),
+  removeMembership: (orgId: string, userId: string) =>
+    request<void>(`/api/orgs/${orgId}/memberships/${userId}`, { method: 'DELETE' }),
   leaveOrg: (orgId: string) =>
     request<void>(`/api/orgs/${orgId}/memberships/me`, { method: 'DELETE' }),
 
@@ -252,6 +251,11 @@ export const api = {
   listActivities: () => request<Activity[]>('/api/activities'),
   createActivity: (a: Omit<Activity, 'id' | 'isActive' | 'isDefault'>) =>
     request<Activity>('/api/activities', { method: 'POST', body: JSON.stringify(a) }),
+  renameActivity: (id: string, name: string) =>
+    request<Activity>(`/api/activities/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
   deleteActivity: (id: string) => request<void>(`/api/activities/${id}`, { method: 'DELETE' }),
   resetActivityScans: (id: string) =>
     request<{ participantsDeleted: number; scansDeleted: number }>(
@@ -282,8 +286,4 @@ export const api = {
   updateUser: (id: string, patch: { isActive?: boolean; defaultActivityId?: string | null; allowedActivityIds?: string[] }) =>
     request<AppUser>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   deleteUser: (id: string) => request<void>(`/api/users/${id}`, { method: 'DELETE' }),
-
-  getSettings: () => request<Settings>('/api/settings'),
-  updateSettings: (s: { eventName?: string | null; defaultActivityId?: string | null }) =>
-    request<Settings>('/api/settings', { method: 'PUT', body: JSON.stringify(s) }),
 };

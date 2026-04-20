@@ -22,7 +22,13 @@
     "welcome": "Bon retour",
     "noAccount": "Pas encore de compte ?",
     "register": "S'inscrire",
-    "stayConnected": "Rester connecté"
+    "stayConnected": "Rester connecté",
+    "orContinueWith": "ou continuer avec",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithMicrosoft": "Continuer avec Microsoft",
+    "googleFailed": "Échec de la connexion Google. Réessayez.",
+    "microsoftFailed": "Échec de la connexion Microsoft. Réessayez.",
+    "accountDisabled": "Ce compte a été désactivé."
   },
   "register": {
     "title": "Créer un compte",
@@ -62,7 +68,10 @@
     "resetScans": "Réinitialiser les scans",
     "resetScansConfirm": "Supprimer tous les participants et scans de l'activité « {{name}} » ?",
     "resetScansSuccess": "Réinitialisation effectuée : {{p}} participants, {{s}} scans supprimés.",
-    "cannotDeleteLast": "Au moins une activité doit toujours exister."
+    "cannotDeleteLast": "Au moins une activité doit toujours exister.",
+    "rename": "Renommer",
+    "renameTitle": "Renommer l’activité",
+    "renameNewName": "Nouveau nom"
   },
   "scan": {
     "title": "Scanner un participant",

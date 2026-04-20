@@ -468,3 +468,95 @@ All previously-open items are now locked. They override any earlier text in this
 ---
 
 *End of plan.*
+
+
+---
+
+## Changelog v4 \u2014 implementation sweep (this commit)
+
+This entry summarises the actual code that landed against the plan above. The
+plan itself is left untouched as the strategic source of truth; deviations are
+called out here.
+
+### Shipped
+
+- **Phase 0 / hardening**
+  - JWT signing key moved out of an App Setting and into Azure Key Vault.
+    infra/resources.bicep now provisions a Microsoft.KeyVault/vaults
+    resource (RBAC-authorized), grants the API's user-assigned managed
+    identity the Key Vault Secrets User role, and the Jwt__SigningKey
+    App Setting is rewritten to a @Microsoft.KeyVault(SecretUri=...)
+    reference. The deploying user also receives the role for local debugging.
+  - CorrelationIdMiddleware assigns / forwards X-Correlation-Id and
+    pushes a logging scope so every log line within the request is
+    correlatable.
+
+- **Phase 3 / cleanup**
+  - The legacy global Settings row, controller, service, model and tests
+    are gone. Event Name + default activity now live on
+    EventEntity per organisation. EventsController.Update keeps
+    ActivityEntity.IsDefault in sync so the existing SPA badge renders
+    without a per-request join.
+  - OrganizationEntity gained a generous Limits block
+    (MaxEvents, MaxMembers, MaxScansPerMonth) for fair-use enforcement.
+
+- **Phase 5 / observability + fair-use**
+  - Application Insights wired in (AddApplicationInsightsTelemetry).
+  - TenantTelemetryInitializer enriches every telemetry item with
+    OrgId, OrgRole, UserId, CorrelationId so per-tenant analytics
+    are trivial in the portal.
+  - `FairUseRateLimiter` registers two policies:
+    - `anon-strict` (30 req/min/IP) on `/api/auth/login` + `register`
+    - `tenant-fair-use` (600 req/min, sliding, partitioned by org+user)
+    - plus a 1200 req/min/IP global fallback.
+    Rejections return `429` with a friendly JSON body and `Retry-After`.
+
+- **Phase 6 / GDPR + SaaS UX**
+  - `MeController` adds `GET /api/me/export` (full JSON export of the
+    user's data across every org) and `DELETE /api/me` (right-to-erasure,
+    with a `409 last_owner` guard so a sole OrgOwner cannot orphan a
+    tenant).
+  - New SPA pages: `SignupOnboardingPage`, `OrgSettingsPage`,
+    `OrgMembersPage`, `OrgInvitationsPage`, `ProfilePage` plus a
+    persistent `CookieBanner` mounted from `main.tsx`.
+  - i18n bundles added for `es`, `de`, `ja`; `LanguageSelect` now
+    surfaces five flags.
+
+- **Tests**
+  - New e2e specs: `signup-and-create-org.spec.ts`,
+    `invite-and-join.spec.ts`, `tenant-isolation.spec.ts`,
+    `leave-org.spec.ts`.
+  - All 61 xUnit tests still pass after the Settings deletion.
+
+### Deferred (still on the plan, not yet implemented)
+
+- **B \u2014 Nested REST routes** (`/api/orgs/{orgId}/{events|activities|...}`)
+  remain mostly flat because cascading the URL change through the SPA
+  breaks every existing route + bookmark in one commit. Will land as a
+  dedicated PR with redirect shims for `/api/activities` etc.
+- **F \u2014 Cosmos hierarchical partition keys** (`/orgId, /eventId, /id`)
+  are NOT live; current containers still use single-path `/partitionKey`.
+  Migration requires a one-shot data copy that is out of scope here.
+- **H \u2014 Front Door + WAF** is not provisioned. The Bicep change is
+  significant and adds operational cost; it should be paired with a custom
+  domain decision.
+- **L \u2014 Microsoft Entra External ID (CIAM)** integration is not started.
+  `AuthController.Login`/`Register` still live and use HS256 JWTs. CIAM
+  is the next-phase replacement but requires tenant provisioning + SPA
+  MSAL integration.
+- `UserEntity.Role` / `IsActive` / `AllowedActivityIds` / `DefaultActivityId`
+  are kept for now so the existing Activities UI continues to function;
+  they are slated for deletion once the per-membership equivalents replace
+  every read site.
+
+### How to verify locally
+
+\\\pwsh
+dotnet build src/OnePass.sln
+dotnet test src/OnePass.sln
+cd src/OnePass.Web; npm run build
+cd ../../tests/e2e; npx tsc --noEmit -p tsconfig.json
+\\\
+
+All four pass at this commit (61/61 unit tests green, no TS errors, SPA
+bundle emits to `src/OnePass.Api/wwwroot`).

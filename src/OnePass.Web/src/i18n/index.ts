@@ -3,9 +3,12 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import en from './en.json';
 import fr from './fr.json';
+import es from './es.json';
+import de from './de.json';
 
-// Two languages at launch (EN/FR); adding another language is as simple as
-// dropping a new JSON file here and adding it to the `resources` object.
+// EN/FR/ES/DE at launch (Phase 6 SaaS roll-out). Adding another
+// language is as simple as dropping a new JSON file here, importing it,
+// and extending `resources` + `supportedLngs`.
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -13,9 +16,11 @@ i18n
     resources: {
       en: { translation: en },
       fr: { translation: fr },
+      es: { translation: es },
+      de: { translation: de },
     },
     fallbackLng: 'en',
-    supportedLngs: ['en', 'fr'],
+    supportedLngs: ['en', 'fr', 'es', 'de'],
     interpolation: { escapeValue: false },
   });
 

@@ -43,4 +43,6 @@ public static class AuditActions
     public const string EventDelete = "event.delete";
     public const string ActivityReset = "activity.reset";
     public const string SettingsUpdate = "settings.update";
+    public const string UserSelfErase = "user.self_erase";
+    public const string UserExport = "user.export";
 }

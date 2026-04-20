@@ -7,7 +7,7 @@ public record CreateUserRequest(
     string Email,
     string Username,
     string Password,
-    string Role,
+    string? Role = null,
     IReadOnlyList<string>? AllowedActivityIds = null,
     string? DefaultActivityId = null);
 
@@ -33,6 +33,9 @@ public record CreateActivityRequest(
     DateTimeOffset EndsAt,
     int MaxScansPerParticipant = 1);
 
+/// <summary>Partial update of an activity. Currently only renames are supported.</summary>
+public record UpdateActivityRequest(string? Name = null);
+
 public record ActivityResponse(
     string Id,
     string Name,
@@ -48,9 +51,6 @@ public record ParticipantResponse(string Id, string ActivityId, string DisplayNa
 
 public record RecordScanRequest(string ActivityId, string ParticipantId);
 public record ScanResponse(string Id, string ActivityId, string ParticipantId, string ScannedByUserId, DateTimeOffset ScannedAt);
-
-public record SettingsResponse(string EventName, string? DefaultActivityId);
-public record UpdateSettingsRequest(string? EventName, string? DefaultActivityId);
 
 // ---- SaaS (multi-tenant) DTOs ----
 
@@ -142,3 +142,24 @@ public record OrgSummary(
     string Slug,
     string Role,
     string Status);
+
+// ---- Phase 6 (compliance) / Phase 7 (fair-use) ----
+
+/// <summary>
+/// User-data export envelope returned by <c>GET /api/me/export</c> for GDPR
+/// data-subject-access requests. Self-contained JSON; no external lookups
+/// are required to reconstruct what we hold for a user.
+/// </summary>
+public record MeExportResponse(
+    object User,
+    IReadOnlyList<object> Memberships,
+    IReadOnlyList<object> AuditEvents);
+
+/// <summary>
+/// Per-organisation fair-use caps. Treated as anti-abuse limits, not commercial
+/// gates (OnePass is free software — see plan §11).
+/// </summary>
+public record OrgLimitsResponse(
+    int MaxEvents,
+    int MaxMembers,
+    int MaxScansPerMonth);

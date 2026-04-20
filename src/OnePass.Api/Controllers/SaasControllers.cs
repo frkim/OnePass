@@ -536,12 +536,44 @@ public class EventsController : ControllerBase
         if (req.StartsAt.HasValue) ev.StartsAt = req.StartsAt.Value;
         if (req.EndsAt.HasValue) ev.EndsAt = req.EndsAt.Value;
         if (req.Venue is not null) ev.Venue = string.IsNullOrWhiteSpace(req.Venue) ? null : req.Venue.Trim();
+        var previousDefault = ev.DefaultActivityId;
         if (req.DefaultActivityId is not null) ev.DefaultActivityId = string.IsNullOrWhiteSpace(req.DefaultActivityId) ? null : req.DefaultActivityId.Trim();
         if (req.IsArchived.HasValue) ev.IsArchived = req.IsArchived.Value;
         await _events.UpdateAsync(ev, ct);
+        // Keep ActivityEntity.IsDefault in sync with EventEntity.DefaultActivityId
+        // so the legacy ActivitiesController + SPA continue to render the
+        // "Default" badge without a per-request event lookup.
+        if (req.DefaultActivityId is not null && !string.Equals(previousDefault, ev.DefaultActivityId, StringComparison.Ordinal))
+        {
+            await SyncActivityDefaultFlagAsync(previousDefault, ev.DefaultActivityId, ct);
+        }
         var actor = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
         await _audit.LogAsync(orgId, actor, AuditActions.EventUpdate, "Event", eventId, req, ct: ct);
         return Map(ev);
+    }
+
+    private async Task SyncActivityDefaultFlagAsync(string? previousActivityId, string? newActivityId, CancellationToken ct)
+    {
+        var activities = HttpContext.RequestServices.GetService(typeof(IActivityService)) as IActivityService;
+        if (activities is null) return;
+        if (!string.IsNullOrWhiteSpace(previousActivityId))
+        {
+            var prev = await activities.GetAsync(previousActivityId, ct);
+            if (prev is not null && prev.IsDefault)
+            {
+                prev.IsDefault = false;
+                await activities.UpdateAsync(prev, ct);
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(newActivityId))
+        {
+            var next = await activities.GetAsync(newActivityId, ct);
+            if (next is not null && !next.IsDefault)
+            {
+                next.IsDefault = true;
+                await activities.UpdateAsync(next, ct);
+            }
+        }
     }
 
     [HttpDelete("{eventId}")]

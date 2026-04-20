@@ -12,6 +12,9 @@ export default function ActivitiesPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [participants, setParticipants] = useState<Record<string, Participant[]>>({});
   const [limitScans, setLimitScans] = useState(false);
+  // When non-null, the row whose name is currently being edited inline.
+  // The buffered draft lives alongside the id so cancelling restores cleanly.
+  const [renaming, setRenaming] = useState<{ id: string; draft: string } | null>(null);
 
   const refresh = () => api.listActivities().then(setList).catch(() => setError(t('common.error')));
   useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
@@ -67,6 +70,29 @@ export default function ActivitiesPage() {
     const created = await api.addParticipant(activityId, name, String(form.get('email') ?? '') || undefined);
     setParticipants(prev => ({ ...prev, [activityId]: [...(prev[activityId] || []), created] }));
     formEl.reset();
+  }
+
+  async function onSaveRename(activity: Activity) {
+    if (!renaming || renaming.id !== activity.id) return;
+    const next = renaming.draft.trim();
+    if (!next || next === activity.name) {
+      setRenaming(null);
+      return;
+    }
+    // Client-side duplicate guard — server enforces it too but the UX
+    // is nicer when we can tell the user before round-tripping.
+    if (list.some(a => a.id !== activity.id && a.name.toLowerCase() === next.toLowerCase())) {
+      setError(t('activity.duplicateName'));
+      return;
+    }
+    try {
+      const updated = await api.renameActivity(activity.id, next);
+      setList(prev => prev.map(a => (a.id === updated.id ? updated : a)));
+      setRenaming(null);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
+    }
   }
 
   const isAdmin = role === 'Admin';
@@ -135,16 +161,39 @@ export default function ActivitiesPage() {
             {list.map(a => (
               <tr key={a.id}>
                 <td>
-                  <a onClick={() => toggleExpand(a.id)} style={{ cursor: 'pointer' }}>{a.name}</a>
-                  {a.isDefault && (
-                    <span style={{
-                      marginLeft: '0.5rem',
-                      fontSize: '0.7rem',
-                      padding: '0.1rem 0.4rem',
-                      borderRadius: '999px',
-                      background: 'var(--brand)',
-                      color: '#fff',
-                    }}>{t('activity.default')}</span>
+                  {renaming?.id === a.id ? (
+                    <form
+                      style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}
+                      onSubmit={e => { e.preventDefault(); onSaveRename(a); }}
+                    >
+                      <input
+                        autoFocus
+                        value={renaming.draft}
+                        onChange={e => setRenaming({ id: a.id, draft: e.target.value })}
+                        onKeyDown={e => { if (e.key === 'Escape') setRenaming(null); }}
+                        aria-label={t('activity.renameNewName')}
+                        style={{ maxWidth: 240 }}
+                        required
+                      />
+                      <button type="submit">{t('common.save')}</button>
+                      <button type="button" className="secondary" onClick={() => setRenaming(null)}>
+                        {t('common.cancel', 'Cancel')}
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <a onClick={() => toggleExpand(a.id)} style={{ cursor: 'pointer' }}>{a.name}</a>
+                      {a.isDefault && (
+                        <span style={{
+                          marginLeft: '0.5rem',
+                          fontSize: '0.7rem',
+                          padding: '0.1rem 0.4rem',
+                          borderRadius: '999px',
+                          background: 'var(--brand)',
+                          color: '#fff',
+                        }}>{t('activity.default')}</span>
+                      )}
+                    </>
                   )}
                 </td>
                 <td>{formatDate(a.startsAt, i18n.language)}</td>
@@ -153,6 +202,14 @@ export default function ActivitiesPage() {
                 <td>
                   {isAdmin && (
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <button
+                        className="secondary"
+                        onClick={() => setRenaming({ id: a.id, draft: a.name })}
+                        disabled={renaming?.id === a.id}
+                        title={t('activity.renameTitle') as string}
+                      >
+                        {t('activity.rename')}
+                      </button>
                       <button className="secondary" onClick={async () => {
                         if (!window.confirm(t('activity.resetScansConfirm', { name: a.name }))) return;
                         try {

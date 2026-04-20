@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OnePass.Api.Auth;
@@ -39,7 +41,6 @@ builder.Services.AddSingleton<IUserService, UserService>();
 builder.Services.AddSingleton<IActivityService, ActivityService>();
 builder.Services.AddSingleton<IParticipantService, ParticipantService>();
 builder.Services.AddSingleton<IScanService, ScanService>();
-builder.Services.AddSingleton<ISettingsService, SettingsService>();
 // SaaS services (Phase 1)
 builder.Services.AddSingleton<IOrganizationService, OrganizationService>();
 builder.Services.AddSingleton<IMembershipService, MembershipService>();
@@ -54,7 +55,15 @@ builder.Services.AddSingleton(retention);
 builder.Services.AddHostedService<RetentionService>();
 
 // ---------- Auth ----------
-builder.Services
+var googleOptions = new GoogleAuthOptions();
+builder.Configuration.GetSection("Auth:Google").Bind(googleOptions);
+builder.Services.AddSingleton(googleOptions);
+
+var microsoftOptions = new MicrosoftAuthOptions();
+builder.Configuration.GetSection("Auth:Microsoft").Bind(microsoftOptions);
+builder.Services.AddSingleton(microsoftOptions);
+
+var authBuilder = builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
@@ -74,6 +83,62 @@ builder.Services
             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
         };
     });
+
+// External OAuth flows (Google, Microsoft, ...) share a short-lived
+// correlation cookie scheme used to round-trip the OIDC state. Register
+// it once whenever any external IdP is wired in this environment so the
+// primary JWT scheme stays untouched. The cookie is wiped by the
+// AuthController completion endpoints as soon as the JIT-provisioning is
+// done.
+if (googleOptions.IsConfigured || microsoftOptions.IsConfigured)
+{
+    authBuilder.AddCookie("ExternalAuth", o =>
+    {
+        o.Cookie.Name = "OnePass.ExternalAuth";
+        o.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+        o.Cookie.HttpOnly = true;
+        o.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+        o.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+        o.SlidingExpiration = false;
+    });
+}
+
+if (googleOptions.IsConfigured)
+{
+    authBuilder.AddGoogle("Google", o =>
+    {
+        o.ClientId = googleOptions.ClientId!;
+        o.ClientSecret = googleOptions.ClientSecret!;
+        o.SignInScheme = "ExternalAuth";
+        o.CallbackPath = "/api/auth/google/callback";
+        o.SaveTokens = false;
+        o.Scope.Add("email");
+        o.Scope.Add("profile");
+        o.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    });
+}
+
+if (microsoftOptions.IsConfigured)
+{
+    // Microsoft Account works for both consumer (MSA) and work/school (AAD)
+    // identities when the app registration's "Supported account types" is
+    // set to "Accounts in any organizational directory and personal
+    // Microsoft accounts" (i.e. the /common authority). The
+    // MicrosoftAccount handler defaults to /common so the App Registration
+    // controls the audience.
+    authBuilder.AddMicrosoftAccount("Microsoft", o =>
+    {
+        o.ClientId = microsoftOptions.ClientId!;
+        o.ClientSecret = microsoftOptions.ClientSecret!;
+        o.SignInScheme = "ExternalAuth";
+        o.CallbackPath = "/api/auth/microsoft/callback";
+        o.SaveTokens = false;
+        // "User.Read" yields the email/name claims we need without asking
+        // for any extra Graph permissions beyond the default profile.
+        o.Scope.Add("User.Read");
+        o.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    });
+}
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(TenantPolicies.OrgMember, p => p.RequireAuthenticatedUser()
@@ -92,6 +157,14 @@ builder.Services.AddAuthorization(options =>
 // Tenant scope is per-request, populated by TenantContextMiddleware.
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<IAuthorizationHandler, OrgRoleHandler>();
+
+// ---------- Phase 5 observability ----------
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddApplicationInsightsTelemetry();
+builder.Services.AddSingleton<ITelemetryInitializer, TenantTelemetryInitializer>();
+
+// ---------- Phase 7 fair-use rate limiting ----------
+builder.Services.AddOnePassRateLimiter();
 
 // ---------- CORS ----------
 const string CorsPolicy = "OnePassFrontend";
@@ -149,7 +222,6 @@ var app = builder.Build();
     var memberships = scope.ServiceProvider.GetRequiredService<IMembershipService>();
     var events = scope.ServiceProvider.GetRequiredService<IEventService>();
     var activities = scope.ServiceProvider.GetRequiredService<IActivityService>();
-    var settings = scope.ServiceProvider.GetRequiredService<ISettingsService>();
 
     UserEntity? admin = null;
     if (seedDefaultAdmin)
@@ -244,9 +316,14 @@ var app = builder.Build();
         await events.UpdateAsync(defaultEvent);
     }
 
-    var current = await settings.GetAsync();
-    if (string.IsNullOrWhiteSpace(current.DefaultActivityId))
-        await settings.UpdateAsync(null, defaultActivity.RowKey);
+    // Mirror the event-default into the activity's stored IsDefault flag so
+    // the legacy ActivitiesController and SPA can keep rendering a Default badge
+    // without needing to look up the parent event on every request.
+    if (!defaultActivity.IsDefault)
+    {
+        defaultActivity.IsDefault = true;
+        await activities.UpdateAsync(defaultActivity);
+    }
 }
 
 static string GenerateStrongPassword()
@@ -275,6 +352,8 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseCors(CorsPolicy);
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<TenantContextMiddleware>();
 app.UseAuthorization();
