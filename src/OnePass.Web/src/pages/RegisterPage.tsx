@@ -19,6 +19,14 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
   const checkSeqRef = useRef(0);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
+
+  // Check whether public registration is allowed.
+  useEffect(() => {
+    api.platformStatus()
+      .then(s => { if (!s.registrationOpen) setRegistrationClosed(true); })
+      .catch(() => { /* best-effort */ });
+  }, []);
 
   // Debounced live check: as the user types, ask the server if the
   // username is still available so we can fail fast before submit.
@@ -121,6 +129,9 @@ export default function RegisterPage() {
     <div className="login-wrapper">
       <form className="card login-card" onSubmit={onSubmit} aria-label={t('register.title')}>
         <h2>{t('register.title')}</h2>
+        {registrationClosed && (
+          <div className="alert error" role="alert">{t('register.closed', 'Public registration is currently disabled.')}</div>
+        )}
         {error && <div className="alert error" role="alert">{error}</div>}
         <div className="field">
           <label htmlFor="email">{t('register.email')}</label>
@@ -191,7 +202,7 @@ export default function RegisterPage() {
             )}
           </div>
         </div>
-        <button type="submit" disabled={!canSubmit} style={{ width: '100%' }}>
+        <button type="submit" disabled={!canSubmit || registrationClosed} style={{ width: '100%' }}>
           {busy ? t('common.loading') : t('register.submit')}
         </button>
         <p style={{ textAlign: 'center', marginTop: '1rem' }}>

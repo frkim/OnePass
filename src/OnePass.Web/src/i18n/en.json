@@ -65,6 +65,7 @@
     "hasAccount": "Already have an account?",
     "login": "Sign in",
     "error": "Registration failed",
+    "closed": "Public registration is currently disabled.",
     "passwordMinLength": "At least 8 characters",
     "passwordUppercase": "At least one uppercase letter",
     "passwordSpecialChar": "At least one special character"
@@ -98,6 +99,8 @@
     "resetScansConfirm": "Delete all participants and scans for activity \"{{name}}\"?",
     "resetScansSuccess": "Reset done: {{p}} participants, {{s}} scans deleted.",
     "cannotDeleteLast": "At least one activity must always exist.",
+    "add": "Add activity",
+    "edit": "Edit",
     "rename": "Rename",
     "renameTitle": "Rename activity",
     "renameNewName": "New name"
@@ -149,7 +152,10 @@
   },
   "common": {
     "save": "Save",
+    "saved": "Saved",
     "cancel": "Cancel",
+    "confirm": "Confirm",
+    "remove": "Remove",
     "loading": "Loading…",
     "error": "Something went wrong.",
     "required": "Required"

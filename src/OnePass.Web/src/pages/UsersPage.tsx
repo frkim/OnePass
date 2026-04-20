@@ -1,21 +1,28 @@
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, Activity, AppUser } from '../api';
+import { PageHeader, EmptyState, Spinner, StatusBadge } from '../components/PageShell';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast, ToastContainer } from '../components/Toast';
 
 export default function UsersPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [allowed, setAllowed] = useState<string[]>([]);
   const [defaultActivity, setDefaultActivity] = useState<string>('');
+  const [confirm, setConfirm] = useState<{
+    title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void;
+  } | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     try {
       const [u, a] = await Promise.all([api.listUsers(), api.listActivities()]);
       setUsers(u);
       setActivities(a);
-      // Default selection: every activity allowed, the global default (if any) selected.
       if (allowed.length === 0) {
         setAllowed(a.map(x => x.id));
         const def = a.find(x => x.isDefault) ?? a[0];
@@ -23,14 +30,16 @@ export default function UsersPage() {
       }
     } catch {
       setError(t('common.error'));
+    } finally {
+      setLoading(false);
     }
-  };
-  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  }, [t]);
+
+  useEffect(() => { refresh(); }, [refresh]);
 
   function toggleAllowed(id: string) {
     setAllowed(prev => {
       const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      // Keep default valid: if removed, fall back to first remaining.
       if (!next.includes(defaultActivity)) setDefaultActivity(next[0] ?? '');
       return next;
     });
@@ -39,10 +48,7 @@ export default function UsersPage() {
   async function onCreate(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    if (allowed.length === 0) {
-      setError(t('users.selectAtLeastOneActivity'));
-      return;
-    }
+    if (allowed.length === 0) { setError(t('users.selectAtLeastOneActivity')); return; }
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
     try {
@@ -55,10 +61,10 @@ export default function UsersPage() {
         defaultActivityId: defaultActivity || allowed[0],
       });
       formEl.reset();
-      // Reset checkboxes to all-allowed for the next entry.
       setAllowed(activities.map(a => a.id));
       const def = activities.find(x => x.isDefault) ?? activities[0];
       setDefaultActivity(def?.id ?? '');
+      toast.success(t('common.saved', 'Saved'));
       refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
@@ -68,15 +74,35 @@ export default function UsersPage() {
   async function toggleActive(u: AppUser) {
     try {
       await api.updateUser(u.id, { isActive: !u.isActive });
+      toast.success(u.isActive ? t('users.disable') : t('users.enable'));
       refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
+  function askDelete(u: AppUser) {
+    setConfirm({
+      title: t('users.delete'),
+      message: `${t('users.delete')}: ${u.username} (${u.email})?`,
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirm(null);
+        try {
+          await api.deleteUser(u.id);
+          toast.success(t('users.delete') + ': ' + u.username);
+          refresh();
+        } catch (err) {
+          setError(err instanceof Error ? err.message : t('common.error'));
+        }
+      },
+    });
+  }
+
   return (
     <>
-      <h1>{t('users.title')}</h1>
+      <PageHeader title={t('users.title')} />
+      <ToastContainer toasts={toast.toasts} />
       {error && <div className="alert error">{error}</div>}
 
       <form className="card" onSubmit={onCreate}>
@@ -95,12 +121,7 @@ export default function UsersPage() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1rem' }}>
             {activities.map(a => (
               <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
-                <input
-                  type="checkbox"
-                  checked={allowed.includes(a.id)}
-                  onChange={() => toggleAllowed(a.id)}
-                  style={{ width: 'auto', margin: 0 }}
-                />
+                <input type="checkbox" checked={allowed.includes(a.id)} onChange={() => toggleAllowed(a.id)} style={{ width: 'auto', margin: 0 }} />
                 {a.name}{a.isDefault ? ` (${t('activity.default')})` : ''}
               </label>
             ))}
@@ -116,40 +137,60 @@ export default function UsersPage() {
             })}
           </select>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="form-actions">
           <button type="submit">{t('common.save')}</button>
         </div>
       </form>
 
       <div className="card">
-        <table>
-          <thead><tr>
-            <th>{t('users.email')}</th>
-            <th>{t('users.username')}</th>
-            <th>{t('users.role')}</th>
-            <th>{t('users.active')}</th>
-            <th></th>
-          </tr></thead>
-          <tbody>
-            {users.map(u => (
-              <tr key={u.id} style={u.isActive ? undefined : { color: 'var(--muted)' }}>
-                <td>{u.email}</td>
-                <td>{u.username}</td>
-                <td>{u.role}</td>
-                <td>{u.isActive ? t('users.active') : t('users.disabled')}</td>
-                <td style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="secondary" onClick={() => toggleActive(u)}>
-                    {u.isActive ? t('users.disable') : t('users.enable')}
-                  </button>
-                  <button className="danger" onClick={async () => { await api.deleteUser(u.id); refresh(); }}>
-                    {t('users.delete')}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {loading ? <Spinner /> : users.length === 0 ? (
+          <EmptyState icon="👤" message={t('dashboard.noData')} />
+        ) : (
+          <table>
+            <thead><tr>
+              <th>{t('users.email')}</th>
+              <th>{t('users.username')}</th>
+              <th>{t('users.role')}</th>
+              <th>{t('users.active')}</th>
+              <th style={{ textAlign: 'right' }}>{t('participants.actions', 'Actions')}</th>
+            </tr></thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} style={u.isActive ? undefined : { opacity: 0.6 }}>
+                  <td>{u.email}</td>
+                  <td>{u.username}</td>
+                  <td><StatusBadge status={u.role} variant={u.role === 'Admin' ? 'info' : 'muted'} /></td>
+                  <td>
+                    <StatusBadge
+                      status={u.isActive ? t('users.active') : t('users.disabled')}
+                      variant={u.isActive ? 'success' : 'danger'}
+                    />
+                  </td>
+                  <td>
+                    <div className="actions-cell">
+                      <button className="secondary" onClick={() => toggleActive(u)}>
+                        {u.isActive ? t('users.disable') : t('users.enable')}
+                      </button>
+                      <button className="danger" onClick={() => askDelete(u)}>
+                        {t('users.delete')}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={!!confirm}
+        title={confirm?.title ?? ''}
+        message={confirm?.message ?? ''}
+        variant={confirm?.variant}
+        onConfirm={confirm?.onConfirm ?? (() => {})}
+        onCancel={() => setConfirm(null)}
+      />
     </>
   );
 }

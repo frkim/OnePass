@@ -58,7 +58,7 @@ public class OrganizationLimits
     /// <summary>Maximum number of events one organisation can host.</summary>
     public int MaxEvents { get; set; } = 50;
     /// <summary>Maximum number of members one organisation can have.</summary>
-    public int MaxMembers { get; set; } = 1000;
+    public int MaxMembers { get; set; } = 200;
     /// <summary>Maximum number of scans recorded per calendar month, summed across the org.</summary>
     public int MaxScansPerMonth { get; set; } = 100_000;
 }

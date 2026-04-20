@@ -32,7 +32,7 @@ public class PlatformSettingsEntity : IEntity
     /// Default retention window (days) applied when an organisation has no
     /// override. 0 / negative means "never auto-purge".
     /// </summary>
-    public int DefaultRetentionDays { get; set; } = 30;
+    public int DefaultRetentionDays { get; set; } = 365;
 
     /// <summary>
     /// Default fair-use limits used when a new organisation is created.

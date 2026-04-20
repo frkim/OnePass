@@ -39,8 +39,13 @@ public record CreateActivityRequest(
     DateTimeOffset EndsAt,
     int MaxScansPerParticipant = 1);
 
-/// <summary>Partial update of an activity. Currently only renames are supported.</summary>
-public record UpdateActivityRequest(string? Name = null);
+/// <summary>Partial update of an activity.</summary>
+public record UpdateActivityRequest(
+    string? Name = null,
+    string? Description = null,
+    DateTimeOffset? StartsAt = null,
+    DateTimeOffset? EndsAt = null,
+    int? MaxScansPerParticipant = null);
 
 public record ActivityResponse(
     string Id,

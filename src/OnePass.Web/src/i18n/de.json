@@ -60,6 +60,7 @@
     "hasAccount": "Schon ein Konto?",
     "login": "Anmelden",
     "error": "Registrierung fehlgeschlagen",
+    "closed": "Die öffentliche Registrierung ist derzeit deaktiviert.",
     "passwordMinLength": "Mindestens 8 Zeichen",
     "passwordUppercase": "Mindestens ein Großbuchstabe",
     "passwordSpecialChar": "Mindestens ein Sonderzeichen"
@@ -93,6 +94,8 @@
     "resetScansConfirm": "Alle Teilnehmer und Scans der Aktivität \"{{name}}\" löschen?",
     "resetScansSuccess": "Zurückgesetzt: {{p}} Teilnehmer und {{s}} Scans gelöscht.",
     "cannotDeleteLast": "Mindestens eine Aktivität muss vorhanden sein.",
+    "add": "Aktivität hinzufügen",
+    "edit": "Bearbeiten",
     "rename": "Umbenennen",
     "renameTitle": "Aktivität umbenennen",
     "renameNewName": "Neuer Name"
@@ -144,7 +147,10 @@
   },
   "common": {
     "save": "Speichern",
+    "saved": "Gespeichert",
     "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "remove": "Entfernen",
     "loading": "Laden…",
     "error": "Etwas ist schiefgegangen.",
     "required": "Erforderlich"

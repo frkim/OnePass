@@ -80,17 +80,35 @@ public class ActivitiesController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Renames an existing activity. Admin-only.</summary>
+    /// <summary>Partially updates an existing activity. Admin-only.</summary>
     [HttpPatch("{id}")]
     [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<ActivityResponse>> Update(string id, [FromBody] UpdateActivityRequest req, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(req.Name))
+        if (req.Name is null && req.Description is null && req.StartsAt is null && req.EndsAt is null && req.MaxScansPerParticipant is null)
             return BadRequest(new { error = "No supported fields to update." });
         try
         {
-            var updated = await _activities.RenameAsync(id, req.Name, ct);
-            return Ok(Map(updated));
+            var existing = await _activities.GetAsync(id, ct);
+            if (existing is null) return NotFound();
+
+            if (req.Name is not null)
+            {
+                // Delegate name change to RenameAsync for collision checks
+                existing = await _activities.RenameAsync(id, req.Name, ct);
+            }
+
+            if (req.Description is not null) existing.Description = req.Description;
+            if (req.StartsAt.HasValue) existing.StartsAt = req.StartsAt.Value;
+            if (req.EndsAt.HasValue) existing.EndsAt = req.EndsAt.Value;
+            if (req.MaxScansPerParticipant.HasValue)
+                existing.MaxScansPerParticipant = req.MaxScansPerParticipant.Value <= 0 ? -1 : req.MaxScansPerParticipant.Value;
+
+            if (existing.EndsAt < existing.StartsAt)
+                return BadRequest(new { error = "End date must be after start date." });
+
+            await _activities.UpdateAsync(existing, ct);
+            return Ok(Map(existing));
         }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }

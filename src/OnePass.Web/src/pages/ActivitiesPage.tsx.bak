@@ -1,0 +1,294 @@
+import { useEffect, useState, FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api, Activity, Participant } from '../api';
+import { useAuth } from '../auth';
+import { formatDate } from '../i18n';
+import { ParticipantsTable } from '../components/ParticipantsTable';
+
+export default function ActivitiesPage() {
+  const { t, i18n } = useTranslation();
+  const { role } = useAuth();
+  const [list, setList] = useState<Activity[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<Record<string, Participant[]>>({});
+  const [scanTimes, setScanTimes] = useState<Record<string, Record<string, string>>>({});
+  const [limitScans, setLimitScans] = useState(false);
+  // When non-null, the row whose name is currently being edited inline.
+  // The buffered draft lives alongside the id so cancelling restores cleanly.
+  const [renaming, setRenaming] = useState<{ id: string; draft: string } | null>(null);
+
+  const refresh = () => api.listActivities().then(setList).catch(() => setError(t('common.error')));
+  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+
+  async function onCreate(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const name = String(data.get('name') ?? '').trim();
+    if (!name) return;
+
+    // Client-side duplicate name guard
+    if (list.some(a => a.name.toLowerCase() === name.toLowerCase())) {
+      setError(t('activity.duplicateName'));
+      return;
+    }
+
+    // Confirmation before saving
+    if (!window.confirm(t('activity.confirmCreate', { name }))) return;
+
+    try {
+      await api.createActivity({
+        name,
+        description: String(data.get('description') ?? ''),
+        startsAt: new Date(String(data.get('startsAt'))).toISOString(),
+        endsAt: new Date(String(data.get('endsAt'))).toISOString(),
+        maxScansPerParticipant: limitScans ? Number(data.get('maxScans') || 1) : -1,
+      });
+      form.reset();
+      setLimitScans(false);
+      refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
+    }
+  }
+
+  async function toggleExpand(id: string) {
+    if (expanded === id) { setExpanded(null); return; }
+    setExpanded(id);
+    if (!participants[id]) {
+      const [p, scans] = await Promise.all([api.listParticipants(id), api.listScans(id)]);
+      setParticipants(prev => ({ ...prev, [id]: p }));
+      // Build map: participantId → most recent scannedAt
+      const times: Record<string, string> = {};
+      for (const s of scans) {
+        if (!times[s.participantId] || s.scannedAt > times[s.participantId]) {
+          times[s.participantId] = s.scannedAt;
+        }
+      }
+      setScanTimes(prev => ({ ...prev, [id]: times }));
+    }
+  }
+
+  async function onAddParticipant(e: FormEvent<HTMLFormElement>, activityId: string) {
+    e.preventDefault();
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+    const name = String(form.get('displayName') ?? '').trim();
+    if (!name) return;
+    const created = await api.addParticipant(activityId, name, String(form.get('email') ?? '') || undefined);
+    setParticipants(prev => ({ ...prev, [activityId]: [...(prev[activityId] || []), created] }));
+    formEl.reset();
+  }
+
+  async function onSaveRename(activity: Activity) {
+    if (!renaming || renaming.id !== activity.id) return;
+    const next = renaming.draft.trim();
+    if (!next || next === activity.name) {
+      setRenaming(null);
+      return;
+    }
+    // Client-side duplicate guard — server enforces it too but the UX
+    // is nicer when we can tell the user before round-tripping.
+    if (list.some(a => a.id !== activity.id && a.name.toLowerCase() === next.toLowerCase())) {
+      setError(t('activity.duplicateName'));
+      return;
+    }
+    try {
+      const updated = await api.renameActivity(activity.id, next);
+      setList(prev => prev.map(a => (a.id === updated.id ? updated : a)));
+      setRenaming(null);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
+    }
+  }
+
+  const isAdmin = role === 'Admin';
+
+  // Defaults for the "create activity" form: name=activity_YYYYMMDD, starts=now, ends=now+1 month.
+  const now = new Date();
+  const oneMonthLater = new Date(now);
+  oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const toLocal = (d: Date) =>
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const defaultName = `activity_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  const defaultStart = toLocal(now);
+  const defaultEnd = toLocal(oneMonthLater);
+
+  return (
+    <>
+      <h1>{t('nav.activities')}</h1>
+      {error && <div className="alert error">{error}</div>}
+
+      {isAdmin && (
+        <form className="card" onSubmit={onCreate}>
+          <h2>{t('activity.create')}</h2>
+          <div className="grid">
+            <div className="field"><label>{t('activity.name')}</label><input name="name" defaultValue={defaultName} required /></div>
+            <div className="field"><label>{t('activity.description')}</label><input name="description" /></div>
+            <div className="field"><label>{t('activity.startsAt')}</label><input name="startsAt" type="datetime-local" defaultValue={defaultStart} required /></div>
+            <div className="field"><label>{t('activity.endsAt')}</label><input name="endsAt" type="datetime-local" defaultValue={defaultEnd} required /></div>
+            <div className="field">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={limitScans}
+                    onChange={e => setLimitScans(e.target.checked)}
+                    style={{ width: 'auto', margin: 0 }}
+                  />
+                  {t('activity.limitMaxScans')}
+                </label>
+                <input
+                  name="maxScans"
+                  type="number"
+                  min={1}
+                  defaultValue={100}
+                  aria-label={t('activity.maxScans')}
+                  style={{ width: '6rem', marginLeft: '0.25rem', display: limitScans ? undefined : 'none' }}
+                />
+                {!limitScans && (
+                  <small style={{ color: 'var(--muted)' }}>{t('activity.unlimited')}</small>
+                )}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="submit">{t('common.save')}</button>
+          </div>
+        </form>
+      )}
+
+      <div className="card">
+        <table>
+          <thead>
+            <tr>
+              <th>{t('activity.name')}</th>
+              <th>{t('activity.startsAt')}</th>
+              <th>{t('activity.endsAt')}</th>
+              <th>{t('activity.maxScans')}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map(a => (
+              <tr key={a.id}>
+                <td>
+                  {renaming?.id === a.id ? (
+                    <form
+                      style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}
+                      onSubmit={e => { e.preventDefault(); onSaveRename(a); }}
+                    >
+                      <input
+                        autoFocus
+                        value={renaming.draft}
+                        onChange={e => setRenaming({ id: a.id, draft: e.target.value })}
+                        onKeyDown={e => { if (e.key === 'Escape') setRenaming(null); }}
+                        aria-label={t('activity.renameNewName')}
+                        style={{ maxWidth: 240 }}
+                        required
+                      />
+                      <button type="submit">{t('common.save')}</button>
+                      <button type="button" className="secondary" onClick={() => setRenaming(null)}>
+                        {t('common.cancel', 'Cancel')}
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <a onClick={() => toggleExpand(a.id)} style={{ cursor: 'pointer' }}>{a.name}</a>
+                      {a.isDefault && (
+                        <span style={{
+                          marginLeft: '0.5rem',
+                          fontSize: '0.7rem',
+                          padding: '0.1rem 0.4rem',
+                          borderRadius: '999px',
+                          background: 'var(--brand)',
+                          color: '#fff',
+                        }}>{t('activity.default')}</span>
+                      )}
+                    </>
+                  )}
+                </td>
+                <td>{formatDate(a.startsAt, i18n.language)}</td>
+                <td>{formatDate(a.endsAt, i18n.language)}</td>
+                <td>{a.maxScansPerParticipant <= 0 ? t('activity.unlimited') : a.maxScansPerParticipant}</td>
+                <td>
+                  {isAdmin && (
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <button
+                        className="secondary"
+                        onClick={() => setRenaming({ id: a.id, draft: a.name })}
+                        disabled={renaming?.id === a.id}
+                        title={t('activity.renameTitle') as string}
+                      >
+                        {t('activity.rename')}
+                      </button>
+                      <button className="secondary" onClick={async () => {
+                        if (!window.confirm(t('activity.resetScansConfirm', { name: a.name }))) return;
+                        try {
+                          const r = await api.resetActivityScans(a.id);
+                          window.alert(t('activity.resetScansSuccess', { p: r.participantsDeleted, s: r.scansDeleted }));
+                          // Refresh the participants table for the expanded row, if any.
+                          if (expanded === a.id) {
+                            const p = await api.listParticipants(a.id);
+                            setParticipants(prev => ({ ...prev, [a.id]: p }));
+                          }
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : t('common.error'));
+                        }
+                      }}>
+                        {t('activity.resetScans')}
+                      </button>
+                      <button className="danger" onClick={async () => {
+                        if (!window.confirm(`${t('users.delete')}: ${a.name}?`)) return;
+                        try {
+                          await api.deleteActivity(a.id);
+                          refresh();
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : t('common.error'));
+                        }
+                      }} disabled={list.length <= 1} title={list.length <= 1 ? t('activity.cannotDeleteLast') : undefined}>
+                        {t('users.delete')}
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {list.length === 0 && <tr><td colSpan={5} style={{ color: 'var(--muted)' }}>{t('dashboard.noData')}</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      {expanded && (
+        <div className="card">
+          <h2>{t('activity.participants')}</h2>
+          <form onSubmit={e => onAddParticipant(e, expanded)} className="row" style={{ marginBottom: '0.75rem' }}>
+            <input name="displayName" placeholder={t('activity.displayName')} required style={{ maxWidth: 240 }} />
+            <input name="email" type="email" placeholder={t('activity.email')} style={{ maxWidth: 240 }} />
+            <button type="submit">{t('activity.addParticipant')}</button>
+          </form>
+          <ParticipantsTable
+            participants={participants[expanded] || []}
+            canDelete={isAdmin}
+            scanTimes={scanTimes[expanded]}
+            onDelete={async (p) => {
+              try {
+                await api.deleteParticipant(expanded, p.id);
+                setParticipants(prev => ({
+                  ...prev,
+                  [expanded]: (prev[expanded] || []).filter(x => x.id !== p.id),
+                }));
+              } catch (err) {
+                setError(err instanceof Error ? err.message : t('common.error'));
+              }
+            }}
+          />
+        </div>
+      )}
+    </>
+  );
+}

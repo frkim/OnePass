@@ -22,6 +22,7 @@ public class AuthController : ControllerBase
     private readonly JwtOptions _opts;
     private readonly GoogleAuthOptions _googleOptions;
     private readonly MicrosoftAuthOptions _microsoftOptions;
+    private readonly IPlatformSettingsService _platformSettings;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
@@ -30,6 +31,7 @@ public class AuthController : ControllerBase
         JwtOptions opts,
         GoogleAuthOptions googleOptions,
         MicrosoftAuthOptions microsoftOptions,
+        IPlatformSettingsService platformSettings,
         ILogger<AuthController> logger)
     {
         _users = users;
@@ -37,6 +39,7 @@ public class AuthController : ControllerBase
         _opts = opts;
         _googleOptions = googleOptions;
         _microsoftOptions = microsoftOptions;
+        _platformSettings = platformSettings;
         _logger = logger;
     }
 
@@ -59,6 +62,10 @@ public class AuthController : ControllerBase
     [EnableRateLimiting(FairUseRateLimiter.AnonymousPolicyName)]
     public async Task<ActionResult<LoginResponse>> Register([FromBody] CreateUserRequest req, CancellationToken ct)
     {
+        var platform = await _platformSettings.GetAsync(ct);
+        if (!platform.RegistrationOpen)
+            return BadRequest(new { error = "Public registration is currently disabled." });
+
         if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
             return BadRequest(new { error = "Email and password are required." });
         try
@@ -108,6 +115,23 @@ public class AuthController : ControllerBase
         google = _googleOptions.IsConfigured,
         microsoft = _microsoftOptions.IsConfigured,
     });
+
+    /// <summary>
+    /// Public platform status: maintenance banner and registration flag.
+    /// Consumed by the SPA shell (AppLayout) on every page load so the
+    /// banner appears for all users — including unauthenticated visitors.
+    /// </summary>
+    [HttpGet("platform-status")]
+    [AllowAnonymous]
+    public async Task<IActionResult> PlatformStatus(CancellationToken ct)
+    {
+        var s = await _platformSettings.GetAsync(ct);
+        return Ok(new
+        {
+            registrationOpen = s.RegistrationOpen,
+            maintenanceMessage = s.MaintenanceMessage,
+        });
+    }
 
     /// <summary>
     /// Start the Google OAuth dance. The browser is bounced to Google's

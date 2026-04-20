@@ -148,6 +148,16 @@ label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 
 
 main.app-main { flex: 1; padding: 1.25rem; max-width: 1200px; width: 100%; margin: 0 auto; }
 
+.maintenance-banner {
+  background: #fef3c7;
+  color: #92400e;
+  border-bottom: 1px solid #fbbf24;
+  padding: 0.625rem 1.25rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -393,3 +403,84 @@ th { color: var(--muted); font-weight: 600; }
   .org-stack .org-chip { display: none; }
   .user-menu-name { display: none; }
 }
+
+/* ---- Page header -------------------------------------------------- */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+}
+.page-header h1 { margin: 0; font-size: 1.5rem; }
+.page-header-desc { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.92rem; }
+.page-header-actions { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; }
+
+/* ---- Empty state -------------------------------------------------- */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 2.5rem 1rem; color: var(--muted); text-align: center;
+}
+.empty-state-icon { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+.empty-state p { margin: 0; font-size: 0.95rem; }
+
+/* ---- Spinner ------------------------------------------------------ */
+.spinner {
+  width: 24px; height: 24px; border: 3px solid var(--border);
+  border-top-color: var(--brand); border-radius: 50%;
+  animation: spin 0.7s linear infinite; margin: 2rem auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Status badge ------------------------------------------------- */
+.status-badge {
+  display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 600; text-transform: capitalize;
+}
+.status-badge-success { background: #dcfce7; color: #166534; }
+.status-badge-danger { background: #fee2e2; color: #991b1b; }
+.status-badge-muted { background: #f1f5f9; color: #475569; }
+.status-badge-info { background: #e0e7ff; color: #3730a3; }
+
+/* ---- Confirm dialog ----------------------------------------------- */
+.confirm-dialog { max-width: 420px; }
+.confirm-dialog-title { margin: 0 0 0.5rem; font-size: 1.1rem; }
+.confirm-dialog-message { margin: 0 0 1.25rem; color: var(--muted); line-height: 1.5; }
+.confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+/* ---- Toast -------------------------------------------------------- */
+.toast-container {
+  position: fixed; top: 1rem; right: 1rem; z-index: 2000;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  max-width: 380px; pointer-events: none;
+}
+.toast {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.65rem 1rem; border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  font-size: 0.9rem; font-weight: 500;
+  animation: toast-in 0.25s ease-out;
+  pointer-events: auto;
+}
+.toast-icon { font-size: 1rem; flex-shrink: 0; }
+.toast-success { background: #dcfce7; color: #166534; }
+.toast-error { background: #fee2e2; color: #991b1b; }
+.toast-info { background: #e0e7ff; color: #3730a3; }
+.toast-warning { background: #fef3c7; color: #92400e; }
+@keyframes toast-in { from { opacity: 0; transform: translateX(1rem); } to { opacity: 1; transform: none; } }
+
+/* ---- CRUD table actions cell -------------------------------------- */
+.actions-cell {
+  display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: nowrap;
+}
+.actions-cell button { padding: 0.35rem 0.65rem; font-size: 0.82rem; white-space: nowrap; }
+
+/* ---- Form card footer --------------------------------------------- */
+.form-actions {
+  display: flex; justify-content: flex-end; gap: 0.5rem;
+  margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border);
+}
+
+/* ---- Inline edit -------------------------------------------------- */
+.inline-edit {
+  display: inline-flex; gap: 0.35rem; align-items: center;
+}
+.inline-edit input { max-width: 240px; padding: 0.3rem 0.5rem; font-size: 0.9rem; }
+.inline-edit button { padding: 0.3rem 0.6rem; font-size: 0.82rem; }

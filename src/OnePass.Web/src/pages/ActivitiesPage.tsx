@@ -1,56 +1,79 @@
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, Activity, Participant } from '../api';
 import { useAuth } from '../auth';
 import { formatDate } from '../i18n';
 import { ParticipantsTable } from '../components/ParticipantsTable';
+import { PageHeader, EmptyState, Spinner } from '../components/PageShell';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast, ToastContainer } from '../components/Toast';
+import { ActivityDialog, ActivityDialogData } from '../components/ActivityDialog';
 
 export default function ActivitiesPage() {
   const { t, i18n } = useTranslation();
   const { role } = useAuth();
+  const toast = useToast();
   const [list, setList] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [participants, setParticipants] = useState<Record<string, Participant[]>>({});
   const [scanTimes, setScanTimes] = useState<Record<string, Record<string, string>>>({});
-  const [limitScans, setLimitScans] = useState(false);
-  // When non-null, the row whose name is currently being edited inline.
-  // The buffered draft lives alongside the id so cancelling restores cleanly.
-  const [renaming, setRenaming] = useState<{ id: string; draft: string } | null>(null);
+  const [dialog, setDialog] = useState<{ mode: 'add' | 'edit'; activity?: Activity } | null>(null);
+  const [confirm, setConfirm] = useState<{
+    title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void;
+  } | null>(null);
 
-  const refresh = () => api.listActivities().then(setList).catch(() => setError(t('common.error')));
-  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  const refresh = useCallback(() => {
+    api.listActivities()
+      .then(setList)
+      .catch(() => setError(t('common.error')))
+      .finally(() => setLoading(false));
+  }, [t]);
 
-  async function onCreate(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  useEffect(() => { refresh(); }, [refresh]);
+
+  async function onDialogSave(data: ActivityDialogData) {
     setError(null);
-    const form = e.currentTarget;
-    const data = new FormData(form);
-    const name = String(data.get('name') ?? '').trim();
-    if (!name) return;
-
-    // Client-side duplicate name guard
-    if (list.some(a => a.name.toLowerCase() === name.toLowerCase())) {
-      setError(t('activity.duplicateName'));
-      return;
-    }
-
-    // Confirmation before saving
-    if (!window.confirm(t('activity.confirmCreate', { name }))) return;
-
-    try {
-      await api.createActivity({
-        name,
-        description: String(data.get('description') ?? ''),
-        startsAt: new Date(String(data.get('startsAt'))).toISOString(),
-        endsAt: new Date(String(data.get('endsAt'))).toISOString(),
-        maxScansPerParticipant: limitScans ? Number(data.get('maxScans') || 1) : -1,
+    if (dialog?.mode === 'edit' && dialog.activity) {
+      // Edit existing activity
+      try {
+        const updated = await api.updateActivity(dialog.activity.id, {
+          name: data.name,
+          description: data.description,
+          startsAt: data.startsAt,
+          endsAt: data.endsAt,
+          maxScansPerParticipant: data.maxScansPerParticipant,
+        });
+        setList(prev => prev.map(a => (a.id === updated.id ? updated : a)));
+        setDialog(null);
+        toast.success(t('common.saved', 'Saved'));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t('common.error'));
+      }
+    } else {
+      // Create new activity — confirm first
+      setConfirm({
+        title: t('activity.create'),
+        message: t('activity.confirmCreate', { name: data.name }),
+        onConfirm: async () => {
+          setConfirm(null);
+          try {
+            await api.createActivity({
+              name: data.name,
+              description: data.description,
+              startsAt: data.startsAt,
+              endsAt: data.endsAt,
+              maxScansPerParticipant: data.maxScansPerParticipant,
+            });
+            setDialog(null);
+            toast.success(t('common.saved', 'Saved'));
+            refresh();
+          } catch (err) {
+            setError(err instanceof Error ? err.message : t('common.error'));
+          }
+        },
       });
-      form.reset();
-      setLimitScans(false);
-      refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
@@ -60,7 +83,6 @@ export default function ActivitiesPage() {
     if (!participants[id]) {
       const [p, scans] = await Promise.all([api.listParticipants(id), api.listScans(id)]);
       setParticipants(prev => ({ ...prev, [id]: p }));
-      // Build map: participantId → most recent scannedAt
       const times: Record<string, string> = {};
       for (const s of scans) {
         if (!times[s.participantId] || s.scannedAt > times[s.participantId]) {
@@ -80,187 +102,112 @@ export default function ActivitiesPage() {
     const created = await api.addParticipant(activityId, name, String(form.get('email') ?? '') || undefined);
     setParticipants(prev => ({ ...prev, [activityId]: [...(prev[activityId] || []), created] }));
     formEl.reset();
+    toast.success(t('activity.addParticipant') + ': ' + created.displayName);
   }
 
-  async function onSaveRename(activity: Activity) {
-    if (!renaming || renaming.id !== activity.id) return;
-    const next = renaming.draft.trim();
-    if (!next || next === activity.name) {
-      setRenaming(null);
-      return;
-    }
-    // Client-side duplicate guard — server enforces it too but the UX
-    // is nicer when we can tell the user before round-tripping.
-    if (list.some(a => a.id !== activity.id && a.name.toLowerCase() === next.toLowerCase())) {
-      setError(t('activity.duplicateName'));
-      return;
-    }
-    try {
-      const updated = await api.renameActivity(activity.id, next);
-      setList(prev => prev.map(a => (a.id === updated.id ? updated : a)));
-      setRenaming(null);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
-    }
+  function askResetScans(a: Activity) {
+    setConfirm({
+      title: t('activity.resetScans'),
+      message: t('activity.resetScansConfirm', { name: a.name }),
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirm(null);
+        try {
+          const r = await api.resetActivityScans(a.id);
+          toast.success(t('activity.resetScansSuccess', { p: r.participantsDeleted, s: r.scansDeleted }));
+          if (expanded === a.id) {
+            const p = await api.listParticipants(a.id);
+            setParticipants(prev => ({ ...prev, [a.id]: p }));
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : t('common.error'));
+        }
+      },
+    });
+  }
+
+  function askDelete(a: Activity) {
+    setConfirm({
+      title: t('users.delete'),
+      message: `${t('users.delete')}: ${a.name}?`,
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirm(null);
+        try {
+          await api.deleteActivity(a.id);
+          toast.success(t('users.delete') + ': ' + a.name);
+          refresh();
+        } catch (err) {
+          setError(err instanceof Error ? err.message : t('common.error'));
+        }
+      },
+    });
   }
 
   const isAdmin = role === 'Admin';
 
-  // Defaults for the "create activity" form: name=activity_YYYYMMDD, starts=now, ends=now+1 month.
-  const now = new Date();
-  const oneMonthLater = new Date(now);
-  oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const toLocal = (d: Date) =>
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  const defaultName = `activity_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
-  const defaultStart = toLocal(now);
-  const defaultEnd = toLocal(oneMonthLater);
-
   return (
     <>
-      <h1>{t('nav.activities')}</h1>
+      <PageHeader title={t('nav.activities')} actions={
+        isAdmin ? (
+          <button onClick={() => setDialog({ mode: 'add' })}>
+            {t('activity.add')}
+          </button>
+        ) : undefined
+      } />
+      <ToastContainer toasts={toast.toasts} />
       {error && <div className="alert error">{error}</div>}
 
-      {isAdmin && (
-        <form className="card" onSubmit={onCreate}>
-          <h2>{t('activity.create')}</h2>
-          <div className="grid">
-            <div className="field"><label>{t('activity.name')}</label><input name="name" defaultValue={defaultName} required /></div>
-            <div className="field"><label>{t('activity.description')}</label><input name="description" /></div>
-            <div className="field"><label>{t('activity.startsAt')}</label><input name="startsAt" type="datetime-local" defaultValue={defaultStart} required /></div>
-            <div className="field"><label>{t('activity.endsAt')}</label><input name="endsAt" type="datetime-local" defaultValue={defaultEnd} required /></div>
-            <div className="field">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                  <input
-                    type="checkbox"
-                    checked={limitScans}
-                    onChange={e => setLimitScans(e.target.checked)}
-                    style={{ width: 'auto', margin: 0 }}
-                  />
-                  {t('activity.limitMaxScans')}
-                </label>
-                <input
-                  name="maxScans"
-                  type="number"
-                  min={1}
-                  defaultValue={100}
-                  aria-label={t('activity.maxScans')}
-                  style={{ width: '6rem', marginLeft: '0.25rem', display: limitScans ? undefined : 'none' }}
-                />
-                {!limitScans && (
-                  <small style={{ color: 'var(--muted)' }}>{t('activity.unlimited')}</small>
-                )}
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button type="submit">{t('common.save')}</button>
-          </div>
-        </form>
-      )}
-
       <div className="card">
-        <table>
-          <thead>
-            <tr>
-              <th>{t('activity.name')}</th>
-              <th>{t('activity.startsAt')}</th>
-              <th>{t('activity.endsAt')}</th>
-              <th>{t('activity.maxScans')}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map(a => (
-              <tr key={a.id}>
-                <td>
-                  {renaming?.id === a.id ? (
-                    <form
-                      style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}
-                      onSubmit={e => { e.preventDefault(); onSaveRename(a); }}
-                    >
-                      <input
-                        autoFocus
-                        value={renaming.draft}
-                        onChange={e => setRenaming({ id: a.id, draft: e.target.value })}
-                        onKeyDown={e => { if (e.key === 'Escape') setRenaming(null); }}
-                        aria-label={t('activity.renameNewName')}
-                        style={{ maxWidth: 240 }}
-                        required
-                      />
-                      <button type="submit">{t('common.save')}</button>
-                      <button type="button" className="secondary" onClick={() => setRenaming(null)}>
-                        {t('common.cancel', 'Cancel')}
-                      </button>
-                    </form>
-                  ) : (
-                    <>
-                      <a onClick={() => toggleExpand(a.id)} style={{ cursor: 'pointer' }}>{a.name}</a>
-                      {a.isDefault && (
-                        <span style={{
-                          marginLeft: '0.5rem',
-                          fontSize: '0.7rem',
-                          padding: '0.1rem 0.4rem',
-                          borderRadius: '999px',
-                          background: 'var(--brand)',
-                          color: '#fff',
-                        }}>{t('activity.default')}</span>
-                      )}
-                    </>
-                  )}
-                </td>
-                <td>{formatDate(a.startsAt, i18n.language)}</td>
-                <td>{formatDate(a.endsAt, i18n.language)}</td>
-                <td>{a.maxScansPerParticipant <= 0 ? t('activity.unlimited') : a.maxScansPerParticipant}</td>
-                <td>
-                  {isAdmin && (
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                      <button
-                        className="secondary"
-                        onClick={() => setRenaming({ id: a.id, draft: a.name })}
-                        disabled={renaming?.id === a.id}
-                        title={t('activity.renameTitle') as string}
-                      >
-                        {t('activity.rename')}
-                      </button>
-                      <button className="secondary" onClick={async () => {
-                        if (!window.confirm(t('activity.resetScansConfirm', { name: a.name }))) return;
-                        try {
-                          const r = await api.resetActivityScans(a.id);
-                          window.alert(t('activity.resetScansSuccess', { p: r.participantsDeleted, s: r.scansDeleted }));
-                          // Refresh the participants table for the expanded row, if any.
-                          if (expanded === a.id) {
-                            const p = await api.listParticipants(a.id);
-                            setParticipants(prev => ({ ...prev, [a.id]: p }));
-                          }
-                        } catch (err) {
-                          setError(err instanceof Error ? err.message : t('common.error'));
-                        }
-                      }}>
-                        {t('activity.resetScans')}
-                      </button>
-                      <button className="danger" onClick={async () => {
-                        if (!window.confirm(`${t('users.delete')}: ${a.name}?`)) return;
-                        try {
-                          await api.deleteActivity(a.id);
-                          refresh();
-                        } catch (err) {
-                          setError(err instanceof Error ? err.message : t('common.error'));
-                        }
-                      }} disabled={list.length <= 1} title={list.length <= 1 ? t('activity.cannotDeleteLast') : undefined}>
-                        {t('users.delete')}
-                      </button>
-                    </div>
-                  )}
-                </td>
+        {loading ? <Spinner /> : list.length === 0 ? (
+          <EmptyState icon="📋" message={t('dashboard.noData')} />
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>{t('activity.name')}</th>
+                <th>{t('activity.startsAt')}</th>
+                <th>{t('activity.endsAt')}</th>
+                <th>{t('activity.maxScans')}</th>
+                {isAdmin && <th style={{ textAlign: 'right' }}>{t('participants.actions', 'Actions')}</th>}
               </tr>
-            ))}
-            {list.length === 0 && <tr><td colSpan={5} style={{ color: 'var(--muted)' }}>{t('dashboard.noData')}</td></tr>}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {list.map(a => (
+                <tr key={a.id}>
+                  <td>
+                    <a onClick={() => toggleExpand(a.id)} style={{ cursor: 'pointer' }}>{a.name}</a>
+                    {a.isDefault && (
+                      <span className="status-badge status-badge-info" style={{ marginLeft: '0.5rem' }}>
+                        {t('activity.default')}
+                      </span>
+                    )}
+                  </td>
+                  <td>{formatDate(a.startsAt, i18n.language)}</td>
+                  <td>{formatDate(a.endsAt, i18n.language)}</td>
+                  <td>{a.maxScansPerParticipant <= 0 ? t('activity.unlimited') : a.maxScansPerParticipant}</td>
+                  {isAdmin && (
+                    <td>
+                      <div className="actions-cell">
+                        <button className="secondary" onClick={() => setDialog({ mode: 'edit', activity: a })}
+                          title={t('activity.edit') as string}>
+                          {t('activity.edit')}
+                        </button>
+                        <button className="secondary" onClick={() => askResetScans(a)}>
+                          {t('activity.resetScans')}
+                        </button>
+                        <button className="danger" onClick={() => askDelete(a)}
+                          disabled={list.length <= 1} title={list.length <= 1 ? t('activity.cannotDeleteLast') : undefined}>
+                          {t('users.delete')}
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {expanded && (
@@ -282,6 +229,7 @@ export default function ActivitiesPage() {
                   ...prev,
                   [expanded]: (prev[expanded] || []).filter(x => x.id !== p.id),
                 }));
+                toast.success(t('participants.delete') + ': ' + p.displayName);
               } catch (err) {
                 setError(err instanceof Error ? err.message : t('common.error'));
               }
@@ -289,6 +237,23 @@ export default function ActivitiesPage() {
           />
         </div>
       )}
+
+      <ActivityDialog
+        open={!!dialog}
+        activity={dialog?.mode === 'edit' ? dialog.activity : null}
+        existingNames={list.map(a => a.name)}
+        onSave={onDialogSave}
+        onCancel={() => setDialog(null)}
+      />
+
+      <ConfirmDialog
+        open={!!confirm}
+        title={confirm?.title ?? ''}
+        message={confirm?.message ?? ''}
+        variant={confirm?.variant}
+        onConfirm={confirm?.onConfirm ?? (() => {})}
+        onCancel={() => setConfirm(null)}
+      />
     </>
   );
 }

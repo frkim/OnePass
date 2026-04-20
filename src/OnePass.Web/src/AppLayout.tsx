@@ -36,6 +36,7 @@ export function AppLayout() {
   // re-open the configuration wizard at any time, even after their first
   // organisation has been created, to spin up additional orgs/events.
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [maintenanceBanner, setMaintenanceBanner] = useState<string | null>(null);
 
   const showFirstRunWizard =
     wizardOpen ||
@@ -52,6 +53,13 @@ export function AppLayout() {
       })
       .catch(() => { /* ignore: header subtitle is best-effort */ });
   }, [username, active?.id]);
+
+  // Fetch the platform-wide maintenance banner (public, no auth).
+  useEffect(() => {
+    api.platformStatus()
+      .then(s => setMaintenanceBanner(s.maintenanceMessage ?? null))
+      .catch(() => { /* best-effort */ });
+  }, []);
 
   // Close the user menu when clicking elsewhere or pressing Escape.
   useEffect(() => {
@@ -202,6 +210,11 @@ export function AppLayout() {
             {t('common.cancel', 'Cancel')}
           </button>
         </form>
+      )}
+      {maintenanceBanner && (
+        <div className="maintenance-banner" role="status">
+          <span aria-hidden="true">⚠️ </span>{maintenanceBanner}
+        </div>
       )}
       <main className="app-main">
         <Outlet />

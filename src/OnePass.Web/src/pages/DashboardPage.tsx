@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Bar } from 'react-chartjs-2';
 import { Chart, CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title } from 'chart.js';
 import { api, Activity, ActivityStats, getToken } from '../api';
+import { PageHeader, EmptyState } from '../components/PageShell';
 
 Chart.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title);
 
@@ -32,7 +33,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <h1>{t('dashboard.title')}</h1>
+      <PageHeader title={t('dashboard.title')} />
       {error && <div className="alert error">{error}</div>}
 
       <div className="card">
@@ -87,7 +88,7 @@ export default function DashboardPage() {
             options={{ responsive: true, plugins: { legend: { display: false } } }}
           />
         ) : (
-          <p style={{ color: 'var(--muted)' }}>{t('dashboard.noData')}</p>
+          <EmptyState icon="📊" message={t('dashboard.noData')} />
         )}
       </div>
     </>

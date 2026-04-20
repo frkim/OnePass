@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import QrScanner from 'qr-scanner';
 import { api, Activity } from '../api';
 import { scanOrQueue, pendingCount, flushQueue } from '../scanQueue';
+import { PageHeader } from '../components/PageShell';
 
 /**
  * Extracts the participant ID from a scanned QR code payload.
@@ -142,7 +143,7 @@ export default function ScanPage() {
 
   return (
     <>
-      <h1>{t('scan.title')}</h1>
+      <PageHeader title={t('scan.title')} />
       {message && (
         <div className={`alert ${message.type}`} role={message.type === 'error' || message.type === 'warning' ? 'alert' : 'status'}>
           <div className="alert-row">

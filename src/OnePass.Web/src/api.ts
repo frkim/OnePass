@@ -208,6 +208,9 @@ export const api = {
     request<{ available: boolean; reason?: string }>(
       `/api/auth/check-username?username=${encodeURIComponent(username)}`,
     ),
+  /** Public platform status (maintenance banner, registration flag). No auth required. */
+  platformStatus: () =>
+    request<PlatformStatus>('/api/auth/platform-status'),
   me: () => request<Me>('/api/auth/me'),
   updateMe: (patch: { defaultActivityId?: string | null; displayName?: string; language?: string }) =>
     request<{ defaultActivityId: string | null; displayName: string; language: string }>('/api/auth/me', {
@@ -270,6 +273,11 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ name }),
     }),
+  updateActivity: (id: string, fields: Partial<Pick<Activity, 'name' | 'description' | 'startsAt' | 'endsAt' | 'maxScansPerParticipant'>>) =>
+    request<Activity>(`/api/activities/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(fields),
+    }),
   deleteActivity: (id: string) => request<void>(`/api/activities/${id}`, { method: 'DELETE' }),
   resetActivityScans: (id: string) =>
     request<{ participantsDeleted: number; scansDeleted: number }>(
@@ -323,6 +331,13 @@ export const api = {
       }),
   },
 };
+
+// ---- Public platform status -------------------------------------------------
+
+export interface PlatformStatus {
+  registrationOpen: boolean;
+  maintenanceMessage?: string | null;
+}
 
 // ---- Global admin types ----------------------------------------------------
 

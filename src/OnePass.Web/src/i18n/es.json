@@ -60,6 +60,7 @@
     "hasAccount": "¿Ya tienes cuenta?",
     "login": "Iniciar sesión",
     "error": "Error en el registro",
+    "closed": "El registro público está actualmente deshabilitado.",
     "passwordMinLength": "Al menos 8 caracteres",
     "passwordUppercase": "Al menos una letra mayúscula",
     "passwordSpecialChar": "Al menos un carácter especial"
@@ -93,6 +94,8 @@
     "resetScansConfirm": "¿Eliminar todos los participantes y escaneos de la actividad \"{{name}}\"?",
     "resetScansSuccess": "Reinicio completado: {{p}} participantes y {{s}} escaneos eliminados.",
     "cannotDeleteLast": "Debe existir al menos una actividad.",
+    "add": "Añadir actividad",
+    "edit": "Editar",
     "rename": "Renombrar",
     "renameTitle": "Renombrar actividad",
     "renameNewName": "Nuevo nombre"
@@ -144,7 +147,10 @@
   },
   "common": {
     "save": "Guardar",
+    "saved": "Guardado",
     "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "remove": "Eliminar",
     "loading": "Cargando…",
     "error": "Algo salió mal.",
     "required": "Obligatorio"

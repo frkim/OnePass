@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { api, Activity, EventInfo } from '../api';
 import { useAuth } from '../auth';
 import { useOrg } from '../org';
+import { PageHeader } from '../components/PageShell';
+import { useToast, ToastContainer } from '../components/Toast';
 
 /**
  * Admin "Parameters" page. After the SaaS migration the global Settings row
@@ -14,6 +16,7 @@ export default function ParametersPage() {
   const { t } = useTranslation();
   const { role } = useAuth();
   const { active } = useOrg();
+  const toast = useToast();
   const isAdmin = role === 'Admin';
 
   const [eventInfo, setEventInfo] = useState<EventInfo | null>(null);
@@ -22,7 +25,6 @@ export default function ParametersPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [myDefault, setMyDefault] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!active?.id) return;
@@ -47,7 +49,7 @@ export default function ParametersPage() {
 
   async function onSaveAdmin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null); setInfo(null);
+    setError(null);
     if (!active?.id || !eventInfo) return;
     try {
       const next = await api.updateEvent(active.id, eventInfo.id, {
@@ -55,7 +57,7 @@ export default function ParametersPage() {
         defaultActivityId: defaultActivityId || null,
       });
       setEventInfo(next);
-      setInfo(t('parameters.saved'));
+      toast.success(t('common.saved', 'Saved'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
     }
@@ -63,10 +65,10 @@ export default function ParametersPage() {
 
   async function onSaveMyDefault(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null); setInfo(null);
+    setError(null);
     try {
       await api.updateMe({ defaultActivityId: myDefault || null });
-      setInfo(t('parameters.saved'));
+      toast.success(t('common.saved', 'Saved'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
     }
@@ -74,9 +76,9 @@ export default function ParametersPage() {
 
   return (
     <>
-      <h1>{t('parameters.title')}</h1>
+      <PageHeader title={t('parameters.title')} />
+      <ToastContainer toasts={toast.toasts} />
       {error && <div className="alert error">{error}</div>}
-      {info && <div className="alert success">{info}</div>}
 
       {isAdmin && eventInfo && (
         <form className="card" onSubmit={onSaveAdmin}>
@@ -103,7 +105,7 @@ export default function ParametersPage() {
             </select>
             <small style={{ color: 'var(--muted)' }}>{t('parameters.defaultActivityHelp')}</small>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="form-actions">
             <button type="submit">{t('common.save')}</button>
           </div>
         </form>
@@ -127,7 +129,7 @@ export default function ParametersPage() {
           </select>
           <small style={{ color: 'var(--muted)' }}>{t('parameters.myDefaultActivityHelp')}</small>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="form-actions">
           <button type="submit">{t('common.save')}</button>
         </div>
       </form>

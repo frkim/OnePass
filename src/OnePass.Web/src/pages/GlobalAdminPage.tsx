@@ -6,6 +6,9 @@ import {
   GlobalAdminStats,
   PlatformSettings,
 } from '../api';
+import { PageHeader, Spinner, EmptyState, StatusBadge } from '../components/PageShell';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast, ToastContainer } from '../components/Toast';
 
 /**
  * Global ("PlatformAdmin") settings page. Only the legacy global Admin
@@ -16,13 +19,16 @@ import {
  */
 export default function GlobalAdminPage() {
   const { t } = useTranslation();
+  const toast = useToast();
 
   const [stats, setStats] = useState<GlobalAdminStats | null>(null);
   const [orgs, setOrgs] = useState<GlobalAdminOrg[]>([]);
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<{
+    title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void;
+  } | null>(null);
 
   async function load() {
     setError(null);
@@ -43,13 +49,21 @@ export default function GlobalAdminPage() {
   useEffect(() => { void load(); }, []);
 
   async function onSetStatus(orgId: string, status: 'Active' | 'Suspended') {
-    if (!window.confirm(t('globalAdmin.confirmStatus', { status }))) return;
-    try {
-      await api.globalAdmin.setOrgStatus(orgId, status);
-      setOrgs(prev => prev.map(o => (o.id === orgId ? { ...o, status } : o)));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
-    }
+    setConfirm({
+      title: status === 'Suspended' ? t('globalAdmin.suspend') : t('globalAdmin.reactivate'),
+      message: t('globalAdmin.confirmStatus', { status }),
+      variant: status === 'Suspended' ? 'danger' : 'default',
+      onConfirm: async () => {
+        setConfirm(null);
+        try {
+          await api.globalAdmin.setOrgStatus(orgId, status);
+          setOrgs(prev => prev.map(o => (o.id === orgId ? { ...o, status } : o)));
+          toast.success(t('common.saved', 'Saved'));
+        } catch (err) {
+          setError(err instanceof Error ? err.message : t('common.error'));
+        }
+      },
+    });
   }
 
   async function onSaveSettings(e: FormEvent) {
@@ -57,7 +71,6 @@ export default function GlobalAdminPage() {
     if (!settings) return;
     setBusy(true);
     setError(null);
-    setSavedAt(null);
     try {
       const updated = await api.globalAdmin.updateSettings({
         registrationOpen: settings.registrationOpen,
@@ -66,7 +79,7 @@ export default function GlobalAdminPage() {
         defaultOrgLimits: settings.defaultOrgLimits,
       });
       setSettings(updated);
-      setSavedAt(new Date().toLocaleTimeString());
+      toast.success(t('common.saved', 'Saved'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
     } finally {
@@ -86,8 +99,8 @@ export default function GlobalAdminPage() {
 
   return (
     <>
-      <h1>{t('globalAdmin.title')}</h1>
-      <p style={{ color: '#64748b', marginTop: '-0.5rem' }}>{t('globalAdmin.subtitle')}</p>
+      <PageHeader title={t('globalAdmin.title')} description={t('globalAdmin.subtitle')} />
+      <ToastContainer toasts={toast.toasts} />
 
       {error && <div className="alert error" role="alert"><span aria-hidden="true">⛔ </span>{error}</div>}
 
@@ -95,7 +108,7 @@ export default function GlobalAdminPage() {
       <section className="card">
         <h2>{t('globalAdmin.statsTitle')}</h2>
         {!stats ? (
-          <p>{t('common.loading')}</p>
+          <Spinner />
         ) : (
           <div className="admin-stats">
             <StatBox label={t('globalAdmin.orgsTotal')} value={stats.orgs.total} />
@@ -112,7 +125,7 @@ export default function GlobalAdminPage() {
       <section className="card">
         <h2>{t('globalAdmin.settingsTitle')}</h2>
         {!settings ? (
-          <p>{t('common.loading')}</p>
+          <Spinner />
         ) : (
           <form onSubmit={onSaveSettings} className="admin-settings-form">
             <label className="checkbox-row">
@@ -172,11 +185,10 @@ export default function GlobalAdminPage() {
                 />
               </label>
             </fieldset>
-            <div className="row">
+            <div className="form-actions">
               <button type="submit" disabled={busy}>
                 {busy ? t('common.loading') : t('common.save')}
               </button>
-              {savedAt && <span style={{ color: '#16a34a' }}>{t('globalAdmin.savedAt', { time: savedAt })}</span>}
             </div>
           </form>
         )}
@@ -186,7 +198,7 @@ export default function GlobalAdminPage() {
       <section className="card">
         <h2>{t('globalAdmin.orgsTitle')}</h2>
         {orgs.length === 0 ? (
-          <p>{t('globalAdmin.orgsNone')}</p>
+          <EmptyState icon="🏢" message={t('globalAdmin.orgsNone')} />
         ) : (
           <table>
             <thead>
@@ -206,12 +218,13 @@ export default function GlobalAdminPage() {
                   <td>{o.name}</td>
                   <td><code>{o.slug}</code></td>
                   <td>
-                    <span className={`status-pill status-${o.status.toLowerCase()}`}>{o.status}</span>
+                    <StatusBadge status={o.status} variant={o.status === 'Active' ? 'success' : 'danger'} />
                   </td>
                   <td>{o.plan}</td>
                   <td>{o.memberCount}</td>
                   <td>{new Date(o.createdAt).toLocaleDateString()}</td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td>
+                    <div className="actions-cell">
                     {o.status === 'Active' ? (
                       <button type="button" className="danger" onClick={() => onSetStatus(o.id, 'Suspended')}>
                         {t('globalAdmin.suspend')}
@@ -223,6 +236,7 @@ export default function GlobalAdminPage() {
                     ) : (
                       <span style={{ color: '#94a3b8' }}>—</span>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -230,6 +244,15 @@ export default function GlobalAdminPage() {
           </table>
         )}
       </section>
+
+      <ConfirmDialog
+        open={!!confirm}
+        title={confirm?.title ?? ''}
+        message={confirm?.message ?? ''}
+        variant={confirm?.variant}
+        onConfirm={confirm?.onConfirm ?? (() => {})}
+        onCancel={() => setConfirm(null)}
+      />
     </>
   );
 }

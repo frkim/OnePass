@@ -60,6 +60,7 @@
     "hasAccount": "Déjà un compte ?",
     "login": "Se connecter",
     "error": "L'inscription a échoué",
+    "closed": "L'inscription publique est actuellement désactivée.",
     "passwordMinLength": "Au moins 8 caractères",
     "passwordUppercase": "Au moins une lettre majuscule",
     "passwordSpecialChar": "Au moins un caractère spécial"
@@ -92,8 +93,8 @@
     "resetScans": "Réinitialiser les scans",
     "resetScansConfirm": "Supprimer tous les participants et scans de l'activité « {{name}} » ?",
     "resetScansSuccess": "Réinitialisation effectuée : {{p}} participants, {{s}} scans supprimés.",
-    "cannotDeleteLast": "Au moins une activité doit toujours exister.",
-    "rename": "Renommer",
+    "cannotDeleteLast": "Au moins une activité doit toujours exister.",    "add": "Ajouter une activité",
+    "edit": "Modifier",    "rename": "Renommer",
     "renameTitle": "Renommer l’activité",
     "renameNewName": "Nouveau nom"
   },
@@ -144,7 +145,10 @@
   },
   "common": {
     "save": "Enregistrer",
+    "saved": "Enregistré",
     "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "remove": "Supprimer",
     "loading": "Chargement…",
     "error": "Une erreur est survenue.",
     "required": "Obligatoire"

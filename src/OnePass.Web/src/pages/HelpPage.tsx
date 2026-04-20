@@ -1,4 +1,5 @@
 import { useTranslation, Trans } from 'react-i18next';
+import { PageHeader } from '../components/PageShell';
 
 /**
  * Help / glossary page reachable from the user menu. Walks newcomers
@@ -11,7 +12,7 @@ export default function HelpPage() {
 
   return (
     <>
-      <h1>{t('help.title')}</h1>
+      <PageHeader title={t('help.title')} />
 
       <div className="card">
         <p>{t('help.intro')}</p>
