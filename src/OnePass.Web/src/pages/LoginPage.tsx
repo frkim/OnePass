@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { api } from '../api';
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [providers, setProviders] = useState<{ google: boolean; microsoft: boolean } | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     // Best-effort: hide the social buttons in dev environments where the
@@ -53,6 +54,11 @@ export default function LoginPage() {
           <li>{t('login.marketingFeature3', 'Multi-organisation & role-based access')}</li>
           <li>{t('login.marketingFeature4', 'CSV export & GDPR-ready data controls')}</li>
         </ul>
+        <p style={{ marginTop: '1rem', marginBottom: 0 }}>
+          <a href="#" className="login-learn-more" onClick={e => { e.preventDefault(); setShowHelp(true); }}>
+            {t('login.learnMore', 'Learn more about OnePass →')}
+          </a>
+        </p>
       </div>
       <form className="card login-card" onSubmit={onSubmit} aria-label={t('login.title')}>
         <div className="login-header">
@@ -176,6 +182,119 @@ export default function LoginPage() {
         </p>
         </form>
       </div>
+
+      {showHelp && (
+        <div className="modal-backdrop" onClick={() => setShowHelp(false)}>
+          <div className="modal-card help-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>{t('help.title')}</h2>
+              <button type="button" className="link-button" onClick={() => setShowHelp(false)} aria-label={t('common.cancel')}>✕</button>
+            </div>
+
+            <p>{t('help.intro')}</p>
+
+            <h3>{t('help.hierarchyTitle')}</h3>
+            <pre className="help-tree" aria-label={t('help.hierarchyTitle') as string}>
+{`Organisation
+└── Event
+    └── Activity
+        ├── Participant
+        └── Scan (Activity × Participant × User)`}
+            </pre>
+
+            <h3>{t('help.entitiesTitle')}</h3>
+
+            <section className="help-entity">
+              <h4>{t('help.org.title')}</h4>
+              <p>{t('help.org.desc')}</p>
+              <ul>
+                <li><Trans i18nKey="help.org.bullet1" /></li>
+                <li><Trans i18nKey="help.org.bullet2" /></li>
+                <li><Trans i18nKey="help.org.bullet3" /></li>
+              </ul>
+            </section>
+
+            <section className="help-entity">
+              <h4>{t('help.event.title')}</h4>
+              <p>{t('help.event.desc')}</p>
+              <ul>
+                <li><Trans i18nKey="help.event.bullet1" /></li>
+                <li><Trans i18nKey="help.event.bullet2" /></li>
+              </ul>
+            </section>
+
+            <section className="help-entity">
+              <h4>{t('help.activity.title')}</h4>
+              <p>{t('help.activity.desc')}</p>
+              <ul>
+                <li><Trans i18nKey="help.activity.bullet1" /></li>
+                <li><Trans i18nKey="help.activity.bullet2" /></li>
+                <li><Trans i18nKey="help.activity.bullet3" /></li>
+              </ul>
+            </section>
+
+            <section className="help-entity">
+              <h4>{t('help.participant.title')}</h4>
+              <p>{t('help.participant.desc')}</p>
+              <ul>
+                <li><Trans i18nKey="help.participant.bullet1" /></li>
+                <li><Trans i18nKey="help.participant.bullet2" /></li>
+              </ul>
+            </section>
+
+            <section className="help-entity">
+              <h4>{t('help.scan.title')}</h4>
+              <p>{t('help.scan.desc')}</p>
+              <ul>
+                <li><Trans i18nKey="help.scan.bullet1" /></li>
+                <li><Trans i18nKey="help.scan.bullet2" /></li>
+              </ul>
+            </section>
+
+            <section className="help-entity">
+              <h4>{t('help.user.title')}</h4>
+              <p>{t('help.user.desc')}</p>
+              <ul>
+                <li><Trans i18nKey="help.user.role.admin" /></li>
+                <li><Trans i18nKey="help.user.role.scanner" /></li>
+                <li><Trans i18nKey="help.user.role.viewer" /></li>
+              </ul>
+            </section>
+
+            <section className="help-entity">
+              <h4>{t('help.invitation.title')}</h4>
+              <p>{t('help.invitation.desc')}</p>
+            </section>
+
+            <h3>{t('help.exampleTitle')}</h3>
+            <p>{t('help.exampleIntro')}</p>
+            <pre className="help-tree" aria-label={t('help.exampleTitle') as string}>
+{`Microsoft                          ← Organisation
+└── Devoxx                         ← Event
+    ├── CraneGrabberClawMachine    ← Activity (1 scan / attendee)
+    ├── KeynoteCheckIn             ← Activity (1 scan / attendee)
+    └── HandsOnLab                 ← Activity (3 scans max)
+        ├── Alice  (badge #A-001)  ← Participant
+        └── Bob    (badge #A-002)  ← Participant`}
+            </pre>
+            <p><Trans i18nKey="help.exampleNarrative" /></p>
+
+            <h3>{t('help.workflowTitle')}</h3>
+            <ol>
+              <li><Trans i18nKey="help.workflow.step1" /></li>
+              <li><Trans i18nKey="help.workflow.step2" /></li>
+              <li><Trans i18nKey="help.workflow.step3" /></li>
+              <li><Trans i18nKey="help.workflow.step4" /></li>
+              <li><Trans i18nKey="help.workflow.step5" /></li>
+              <li><Trans i18nKey="help.workflow.step6" /></li>
+            </ol>
+
+            <div className="modal-footer">
+              <button type="button" onClick={() => setShowHelp(false)}>{t('common.cancel')}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

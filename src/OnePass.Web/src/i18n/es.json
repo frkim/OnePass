@@ -41,7 +41,8 @@
     "marketingFeature1": "Seguimiento de escaneos y paneles en tiempo real",
     "marketingFeature2": "Funciona sin conexión — los escaneos se sincronizan al volver",
     "marketingFeature3": "Multi-organización y control de acceso por roles",
-    "marketingFeature4": "Exportación CSV y controles de datos RGPD"
+    "marketingFeature4": "Exportación CSV y controles de datos RGPD",
+    "learnMore": "Más información sobre OnePass →"
   },
   "register": {
     "title": "Crear una cuenta",

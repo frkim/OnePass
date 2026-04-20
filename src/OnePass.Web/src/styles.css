@@ -295,6 +295,9 @@ th { color: var(--muted); font-weight: 600; }
   cursor: pointer; padding: 0.4rem 0.6rem; text-decoration: underline;
 }
 .modal-footer .link-button:hover { color: #0f172a; }
+.help-modal { max-width: 720px; }
+.login-learn-more { color: var(--primary, #4f46e5); font-weight: 500; text-decoration: none; }
+.login-learn-more:hover { text-decoration: underline; }
 
 .wizard-steps {
   display: flex; gap: 0.4rem; list-style: none; padding: 0; margin: 0.5rem 0 1rem;

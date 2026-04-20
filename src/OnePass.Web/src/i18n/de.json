@@ -41,7 +41,8 @@
     "marketingFeature1": "Echtzeit-Scan-Tracking und Dashboards",
     "marketingFeature2": "Funktioniert offline — Scans werden bei Verbindung synchronisiert",
     "marketingFeature3": "Multi-Organisation und rollenbasierte Zugriffskontrolle",
-    "marketingFeature4": "CSV-Export und DSGVO-konforme Datenkontrollen"
+    "marketingFeature4": "CSV-Export & DSGVO-konforme Datenkontrolle",
+    "learnMore": "Mehr über OnePass erfahren →"
   },
   "register": {
     "title": "Konto erstellen",

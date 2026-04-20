@@ -41,7 +41,8 @@
     "marketingFeature1": "Suivi des scans et tableaux de bord en temps réel",
     "marketingFeature2": "Fonctionne hors ligne — les scans se synchronisent au retour",
     "marketingFeature3": "Multi-organisation et contrôle d'accès par rôle",
-    "marketingFeature4": "Export CSV et contrôles de données RGPD"
+    "marketingFeature4": "Export CSV et contrôles de données RGPD",
+    "learnMore": "En savoir plus sur OnePass →"
   },
   "register": {
     "title": "Créer un compte",

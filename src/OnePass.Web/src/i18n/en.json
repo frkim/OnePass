@@ -46,7 +46,8 @@
     "marketingFeature1": "Real-time scan tracking & dashboards",
     "marketingFeature2": "Works offline — scans sync when back online",
     "marketingFeature3": "Multi-organisation & role-based access",
-    "marketingFeature4": "CSV export & GDPR-ready data controls"
+    "marketingFeature4": "CSV export & GDPR-ready data controls",
+    "learnMore": "Learn more about OnePass →"
   },
   "register": {
     "title": "Create an account",
