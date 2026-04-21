@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Activity } from '../api';
+import type { Activity, EventInfo } from '../api';
 
 export interface ActivityDialogData {
   name: string;
@@ -9,6 +9,7 @@ export interface ActivityDialogData {
   endsAt: string;
   limitMaxScans: boolean;
   maxScansPerParticipant: number;
+  eventId: string;
 }
 
 interface ActivityDialogProps {
@@ -16,6 +17,7 @@ interface ActivityDialogProps {
   /** Pass an existing activity to edit, or null/undefined to create. */
   activity?: Activity | null;
   existingNames: string[];
+  events: EventInfo[];
   onSave: (data: ActivityDialogData) => void;
   onCancel: () => void;
 }
@@ -26,7 +28,7 @@ function toLocalDatetime(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function ActivityDialog({ open, activity, existingNames, onSave, onCancel }: ActivityDialogProps) {
+export function ActivityDialog({ open, activity, existingNames, events, onSave, onCancel }: ActivityDialogProps) {
   const { t } = useTranslation();
   const nameRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +75,12 @@ export function ActivityDialog({ open, activity, existingNames, onSave, onCancel
     const name = String(form.get('name') ?? '').trim();
     if (!name) return;
 
+    const eventId = String(form.get('eventId') ?? '').trim();
+    if (!isEdit && !eventId) {
+      setError(t('activity.eventRequired'));
+      return;
+    }
+
     // Check duplicate names (exclude current activity when editing)
     const isDuplicate = existingNames.some(
       n => n.toLowerCase() === name.toLowerCase() && (!activity || activity.name.toLowerCase() !== name.toLowerCase())
@@ -89,6 +97,7 @@ export function ActivityDialog({ open, activity, existingNames, onSave, onCancel
       endsAt: new Date(String(form.get('endsAt'))).toISOString(),
       limitMaxScans: limitScans,
       maxScansPerParticipant: limitScans ? Number(form.get('maxScans') || 1) : -1,
+      eventId,
     });
   }
 
@@ -103,6 +112,17 @@ export function ActivityDialog({ open, activity, existingNames, onSave, onCancel
 
         <form onSubmit={handleSubmit}>
           <div className="grid">
+            {!isEdit && (
+              <div className="field">
+                <label>{t('activity.event')}</label>
+                <select name="eventId" required defaultValue="">
+                  <option value="" disabled>{t('activity.selectEvent')}</option>
+                  {events.filter(ev => !ev.isArchived).map(ev => (
+                    <option key={ev.id} value={ev.id}>{ev.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="field">
               <label>{t('activity.name')}</label>
               <input

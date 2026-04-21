@@ -5,6 +5,7 @@ import { PageHeader, EmptyState, Spinner, StatusBadge } from '../components/Page
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast, ToastContainer } from '../components/Toast';
 import { UserDialog, UserDialogData } from '../components/UserDialog';
+import { ResetPasswordDialog } from '../components/ResetPasswordDialog';
 
 export default function UsersPage() {
   const { t } = useTranslation();
@@ -18,6 +19,7 @@ export default function UsersPage() {
     title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void;
   } | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [resetUser, setResetUser] = useState<AppUser | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close popup when clicking outside
@@ -108,7 +110,7 @@ export default function UsersPage() {
     <>
       <PageHeader title={t('users.title')} actions={
         <button onClick={() => setDialog({ mode: 'add' })}>
-          {t('users.create')}
+          {t('users.add')}
         </button>
       } />
       <ToastContainer toasts={toast.toasts} />
@@ -148,6 +150,9 @@ export default function UsersPage() {
                           <button className="row-menu-item" onClick={() => { setMenuOpen(null); toggleActive(u); }}>
                             {u.isActive ? t('users.disable') : t('users.enable')}
                           </button>
+                          <button className="row-menu-item" onClick={() => { setMenuOpen(null); setResetUser(u); }}>
+                            {t('users.resetPassword', 'Reset password')}
+                          </button>
                           <button className="row-menu-item row-menu-item-danger" onClick={() => { setMenuOpen(null); askDelete(u); }}>
                             {t('users.delete')}
                           </button>
@@ -166,6 +171,7 @@ export default function UsersPage() {
         open={!!dialog}
         user={dialog?.mode === 'edit' ? dialog.user : null}
         activities={activities}
+        existingUsers={users}
         onSave={onDialogSave}
         onCancel={() => setDialog(null)}
       />
@@ -177,6 +183,18 @@ export default function UsersPage() {
         variant={confirm?.variant}
         onConfirm={confirm?.onConfirm ?? (() => {})}
         onCancel={() => setConfirm(null)}
+      />
+
+      <ResetPasswordDialog
+        open={!!resetUser}
+        username={resetUser?.username ?? ''}
+        onSave={async (newPassword) => {
+          if (!resetUser) return;
+          await api.adminResetPassword(resetUser.id, newPassword);
+          setResetUser(null);
+          toast.success(t('users.resetPasswordSuccess', 'Password reset for {{username}}', { username: resetUser.username }));
+        }}
+        onCancel={() => setResetUser(null)}
       />
     </>
   );

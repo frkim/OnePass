@@ -39,6 +39,9 @@ public class OrganizationEntity : IEntity
     public string? BrandingLogoUrl { get; set; }
     public string? BrandingPrimaryColor { get; set; }
 
+    /// <summary>Organisation-wide default event (the "active" event for scanning/activities).</summary>
+    public string? DefaultEventId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>Slug used **before** the most recent rename, for 301 redirects.</summary>

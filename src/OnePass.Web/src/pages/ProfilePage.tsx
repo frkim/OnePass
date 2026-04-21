@@ -13,7 +13,7 @@ import { useToast, ToastContainer } from '../components/Toast';
  */
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
-  const { logout } = useAuth();
+  const { logout, role } = useAuth();
   const toast = useToast();
   const [me, setMe] = useState<{ id: string; username: string; displayName?: string; role: string; language: string } | null>(null);
   const [language, setLanguage] = useState(i18n.language);
@@ -64,7 +64,11 @@ export default function ProfilePage() {
         setConfirm(null);
         try {
           const res = await fetch('/api/me', { method: 'DELETE', credentials: 'include' });
-          if (!res.ok) throw new Error(await res.text());
+          if (!res.ok) {
+            let msg = `Request failed: ${res.status}`;
+            try { const body = await res.json(); if (body.error) msg = body.error; } catch { /* ignore */ }
+            throw new Error(msg);
+          }
           logout();
           window.location.href = '/login';
         } catch (err) {
@@ -83,6 +87,10 @@ export default function ProfilePage() {
       {error && <div className="alert error">{error}</div>}
 
       <form className="card" onSubmit={onSave}>
+        <div className="field">
+          <label>{t('profile.usernameLabel', 'Username')}</label>
+          <input value={me.username} readOnly disabled />
+        </div>
         <div className="field">
           <label>{t('profile.username', 'Display name')}</label>
           <input value={displayName} onChange={e => setDisplayName(e.target.value)} maxLength={100} />
@@ -105,21 +113,25 @@ export default function ProfilePage() {
         </div>
       </form>
 
-      <div className="card">
-        <h2>{t('profile.dataPortability', 'Your data')}</h2>
-        <p>{t('profile.dataHelp', 'Download a JSON file containing every record OnePass holds for you, across every organisation you belong to.')}</p>
-        <button type="button" onClick={onExport}>{t('profile.export', 'Export my data (JSON)')}</button>
-      </div>
-
-      <div className="card" style={{ borderColor: 'var(--danger, #c0392b)' }}>
-        <h2>{t('profile.danger', 'Danger zone')}</h2>
-        <p>{t('profile.deleteHelp', 'Deleting your account is permanent. Audit records for compliance reasons are retained but anonymised.')}</p>
-        <div className="form-actions" style={{ borderTop: 'none', paddingTop: 0, justifyContent: 'flex-start' }}>
-          <button type="button" className="danger" onClick={askDeleteAccount}>
-            {t('profile.delete', 'Delete my account')}
-          </button>
+      {role !== 'GlobalAdmin' && (
+        <div className="card">
+          <h2>{t('profile.dataPortability', 'Your data')}</h2>
+          <p>{t('profile.dataHelp', 'Download a JSON file containing every record OnePass holds for you, across every organisation you belong to.')}</p>
+          <button type="button" onClick={onExport}>{t('profile.export', 'Export my data (JSON)')}</button>
         </div>
-      </div>
+      )}
+
+      {role !== 'GlobalAdmin' && (
+        <div className="card" style={{ borderColor: 'var(--danger, #c0392b)' }}>
+          <h2>{t('profile.danger', 'Danger zone')}</h2>
+          <p>{t('profile.deleteHelp', 'Deleting your account is permanent. Audit records for compliance reasons are retained but anonymised.')}</p>
+          <div className="form-actions" style={{ borderTop: 'none', paddingTop: 0, justifyContent: 'flex-start' }}>
+            <button type="button" className="danger" onClick={askDeleteAccount}>
+              {t('profile.delete', 'Delete my account')}
+            </button>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={!!confirm}

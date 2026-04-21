@@ -3,6 +3,10 @@ namespace OnePass.Api.Dtos;
 public record LoginRequest(string EmailOrUsername, string Password);
 public record LoginResponse(string Token, string UserId, string Username, string Role, int ExpiresInMinutes);
 
+public record ForgotPasswordRequest(string Email);
+public record ResetPasswordRequest(string Token, string NewPassword);
+public record AdminResetPasswordRequest(string NewPassword);
+
 public record CreateUserRequest(
     string Email,
     string Username,
@@ -29,6 +33,7 @@ public record UpdateUserRequest(
 /// <summary>Payload for PATCH /api/auth/me — user self-service profile update.</summary>
 public record UpdateMeRequest(
     string? DefaultActivityId = null,
+    string? DefaultEventId = null,
     string? DisplayName = null,
     string? Language = null);
 
@@ -37,7 +42,8 @@ public record CreateActivityRequest(
     string? Description,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
-    int MaxScansPerParticipant = 1);
+    int MaxScansPerParticipant = 1,
+    string? EventId = null);
 
 /// <summary>Partial update of an activity.</summary>
 public record UpdateActivityRequest(
@@ -55,13 +61,14 @@ public record ActivityResponse(
     DateTimeOffset EndsAt,
     int MaxScansPerParticipant,
     bool IsActive,
-    bool IsDefault);
+    bool IsDefault,
+    string? EventId = null);
 
 public record CreateParticipantRequest(string DisplayName, string? Email);
 public record ParticipantResponse(string Id, string ActivityId, string DisplayName, string? Email);
 
 public record RecordScanRequest(string ActivityId, string ParticipantId);
-public record ScanResponse(string Id, string ActivityId, string ParticipantId, string ScannedByUserId, DateTimeOffset ScannedAt);
+public record ScanResponse(string Id, string ActivityId, string ParticipantId, string ScannedByUserId, DateTimeOffset ScannedAt, string? ScannedByUsername = null);
 
 // ---- SaaS (multi-tenant) DTOs ----
 
@@ -76,7 +83,8 @@ public record OrganizationResponse(
     DateTimeOffset CreatedAt,
     string? PreviousSlug,
     string? BrandingLogoUrl,
-    string? BrandingPrimaryColor);
+    string? BrandingPrimaryColor,
+    string? DefaultEventId = null);
 
 public record CreateOrganizationRequest(string Name, string? Slug, string? OrgId = null);
 public record UpdateOrganizationRequest(
@@ -84,7 +92,8 @@ public record UpdateOrganizationRequest(
     string? Slug = null,
     string? BrandingLogoUrl = null,
     string? BrandingPrimaryColor = null,
-    int? RetentionDays = null);
+    int? RetentionDays = null,
+    string? DefaultEventId = null);
 
 public record MembershipResponse(
     string OrgId,

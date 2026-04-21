@@ -38,8 +38,8 @@ public sealed class OrganizationService : IOrganizationService
     // 0–38 inner chars including dashes + end char).
     private static readonly Regex SlugRegex = new("^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$", RegexOptions.Compiled);
 
-    // Org ID grammar: 1–24 chars, lowercase alphanumerics + underscores only.
-    private static readonly Regex OrgIdRegex = new("^[a-z0-9][a-z0-9_]{0,22}[a-z0-9]?$", RegexOptions.Compiled);
+    // Org ID grammar: 1–16 chars, lowercase alphanumerics + underscores/dashes only.
+    private static readonly Regex OrgIdRegex = new("^[a-z0-9](?:[a-z0-9_-]{0,14}[a-z0-9])?$", RegexOptions.Compiled);
 
     private readonly ITableRepository<OrganizationEntity> _repo;
 
@@ -169,11 +169,24 @@ public sealed class OrganizationService : IOrganizationService
     {
         if (string.IsNullOrEmpty(orgId))
             throw new ArgumentException("Organisation id is required.", nameof(orgId));
-        if (orgId.Length > 24)
-            throw new ArgumentException("Organisation id must be 24 characters or less.", nameof(orgId));
+        if (orgId.Length > 16)
+            throw new ArgumentException("Organisation id must be 16 characters or less.", nameof(orgId));
         if (!OrgIdRegex.IsMatch(orgId))
-            throw new ArgumentException("Organisation id must contain only lowercase alphanumeric characters and underscores.", nameof(orgId));
+            throw new ArgumentException("Organisation id must contain only lowercase alphanumeric characters, underscores and dashes.", nameof(orgId));
         if (ReservedSlugs.Contains(orgId))
             throw new ArgumentException($"Organisation id '{orgId}' is reserved.", nameof(orgId));
+    }
+
+    /// <summary>
+    /// Derives a URL-safe organisation id from a display name:
+    /// lowercase, non-alphanum → underscore, collapsed, trimmed to 16 chars.
+    /// </summary>
+    public static string NormaliseOrgId(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+        var s = raw.Trim().ToLowerInvariant();
+        s = Regex.Replace(s, "[^a-z0-9]+", "_").Trim('_');
+        if (s.Length > 16) s = s[..16].TrimEnd('_');
+        return s;
     }
 }

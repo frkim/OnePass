@@ -28,12 +28,14 @@ interface ParticipantsTableProps {
   scanTimes?: Record<string, string>;
   /** When provided, replaces the email column with an activity-name column. */
   activityNames?: Record<string, string>;
+  /** Map from participant id to the userId who scanned them most recently. */
+  scannedByUsers?: Record<string, string>;
 }
 
 const PAGE_SIZES = [20, 100, 200] as const;
 type PageSize = typeof PAGE_SIZES[number];
 
-export function ParticipantsTable({ participants, canDelete, onDelete, onSelect, scanTimes, activityNames }: ParticipantsTableProps) {
+export function ParticipantsTable({ participants, canDelete, onDelete, onSelect, scanTimes, activityNames, scannedByUsers }: ParticipantsTableProps) {
   const { t } = useTranslation();
 
   const [search, setSearch] = useState('');
@@ -183,6 +185,11 @@ export function ParticipantsTable({ participants, canDelete, onDelete, onSelect,
                 {t('participants.lastScanned', 'Last scanned')} {sortIndicator('lastScannedAt')}
               </th>
             )}
+            {scannedByUsers && (
+              <th role="columnheader">
+                {t('participants.scannedBy', 'User')}
+              </th>
+            )}
             {onSelect && <th />}
             {canDelete && <th aria-label={t('participants.actions') as string} />}
           </tr>
@@ -214,6 +221,8 @@ export function ParticipantsTable({ participants, canDelete, onDelete, onSelect,
                 aria-label={`${activityNames ? t('participants.activity', 'Activity') : t('activity.email')} ${t('participants.filterPlaceholder')}`}
               />
             </th>
+            {scanTimes && <th />}
+            {scannedByUsers && <th />}
             {onSelect && <th />}
             {canDelete && <th />}
           </tr>
@@ -226,6 +235,9 @@ export function ParticipantsTable({ participants, canDelete, onDelete, onSelect,
               <td>{activityNames ? (activityNames[p.activityId] ?? p.activityId) : p.email}</td>
               {scanTimes && (
                 <td>{scanTimes[p.id] ? new Date(scanTimes[p.id]).toLocaleString() : '—'}</td>
+              )}
+              {scannedByUsers && (
+                <td>{scannedByUsers[p.id] ?? '—'}</td>
               )}
               {onSelect && (
                 <td style={{ textAlign: 'right' }}>

@@ -5,12 +5,14 @@
     "language": "Idioma"
   },
   "nav": {
+    "menu": "Menú",
     "dashboard": "Panel",
     "activities": "Actividades",
-    "scan": "Escanear",
+    "events": "Eventos",
+    "scan": "Escáner de credenciales",
     "users": "Usuarios",
-    "parameters": "Ajustes",
-    "profile": "Perfil",
+    "parameters": "Mis ajustes",
+    "profile": "Mi perfil",
     "help": "Ayuda",
     "setupWizard": "Asistente de configuración",
     "globalAdmin": "Administración global",
@@ -36,6 +38,7 @@
     "accountDisabled": "Esta cuenta ha sido deshabilitada.",
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
     "marketingTitle": "Bienvenido a OnePass",
     "marketingDesc": "OnePass es la plataforma integral de escaneo de credenciales y seguimiento de actividades para eventos presenciales. Crea actividades, invita a tu equipo, escanea participantes — y obtén análisis en tiempo real, exportaciones CSV y una app progresiva que funciona sin conexión.",
     "marketingFeature1": "Seguimiento de escaneos y paneles en tiempo real",
@@ -65,8 +68,28 @@
     "passwordUppercase": "Al menos una letra mayúscula",
     "passwordSpecialChar": "Al menos un carácter especial"
   },
+  "forgotPassword": {
+    "title": "¿Olvidaste tu contraseña?",
+    "description": "Introduce tu dirección de correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+    "email": "Correo electrónico",
+    "submit": "Enviar enlace",
+    "sent": "Si este correo está registrado, se ha enviado un enlace de restablecimiento. Revisa tu bandeja de entrada (o la consola de la API en modo dev).",
+    "error": "Algo salió mal. Inténtalo de nuevo.",
+    "backToLogin": "Volver a iniciar sesión"
+  },
+  "resetPassword": {
+    "title": "Restablecer contraseña",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar nueva contraseña",
+    "submit": "Restablecer contraseña",
+    "success": "Tu contraseña se ha restablecido correctamente.",
+    "error": "Error al restablecer. El enlace puede haber expirado.",
+    "missingToken": "Enlace de restablecimiento no válido. Solicita uno nuevo.",
+    "requestNew": "Solicitar un nuevo enlace",
+    "goToLogin": "Iniciar sesión con tu nueva contraseña"
+  },
   "dashboard": {
-    "title": "Panel de administración",
+    "title": "Panel de escaneos",
     "totalActivities": "Total de actividades",
     "totalScans": "Total de escaneos",
     "uniqueParticipants": "Participantes únicos",
@@ -83,7 +106,7 @@
     "limitMaxScans": "Limitar escaneos por participante",
     "unlimited": "Ilimitado",
     "create": "Crear actividad",
-    "participants": "Participantes",
+    "participants": "Historial de escaneos",
     "addParticipant": "Añadir participante",
     "displayName": "Nombre visible",
     "email": "Correo (opcional)",
@@ -99,10 +122,13 @@
     "edit": "Editar",
     "rename": "Renombrar",
     "renameTitle": "Renombrar actividad",
-    "renameNewName": "Nuevo nombre"
+    "renameNewName": "Nuevo nombre",
+    "event": "Evento",
+    "selectEvent": "Seleccionar un evento…",
+    "eventRequired": "Se debe seleccionar un evento."
   },
   "scan": {
-    "title": "Escanear participante",
+    "title": "Esc\u00e1ner de acreditaciones",
     "chooseActivity": "Elegir actividad",
     "participantId": "ID de participante (QR)",
     "submit": "Registrar escaneo manualmente",
@@ -122,6 +148,7 @@
   },
   "users": {
     "title": "Usuarios",
+    "add": "Añadir usuario",
     "create": "Crear usuario",
     "email": "Correo",
     "username": "Usuario",
@@ -135,23 +162,44 @@
     "disable": "Deshabilitar",
     "allowedActivities": "Actividades permitidas",
     "defaultActivity": "Actividad predeterminada",
-    "selectAtLeastOneActivity": "Selecciona al menos una actividad"
+    "selectAtLeastOneActivity": "Selecciona al menos una actividad",
+    "resetPassword": "Restablecer contraseña",
+    "resetPasswordFor": "Establecer una nueva contraseña para {{username}}.",
+    "newPassword": "Nueva contraseña",
+    "resetPasswordSuccess": "Contraseña restablecida para {{username}}"
   },
   "parameters": {
-    "title": "Ajustes",
-    "eventName": "Nombre del evento",
-    "eventNameHelp": "Nombre público mostrado en toda la aplicación.",
+    "title": "Mis ajustes",
+    "defaultEvent": "Evento predeterminado",
+    "defaultEventHelp": "Evento preseleccionado para el escaneo y las actividades.",
     "defaultActivity": "Actividad predeterminada",
     "defaultActivityHelp": "Preseleccionada en la página de escaneo cuando el usuario no tiene una propia.",
+    "myDefaults": "Mis valores predeterminados",
+    "myDefaultEvent": "Mi evento predeterminado",
+    "myDefaultEventHelp": "Sustituye el evento predeterminado de la organización para tu cuenta.",
     "myDefaultActivity": "Mi actividad predeterminada",
-    "myDefaultActivityHelp": "Sustituye al valor global para tu cuenta.",
+    "myDefaultActivityHelp": "Sustituye la actividad predeterminada global para tu cuenta.",
     "saved": "Guardado.",
     "none": "Ninguna"
+  },
+  "orgSettings": {
+    "title": "Configuración de la organización",
+    "identity": "Identidad",
+    "defaults": "Valores predeterminados",
+    "name": "Nombre para mostrar",
+    "slug": "Slug",
+    "slugPattern": "Solo letras minúsculas, dígitos y guiones.",
+    "slugHelp": "Usado en URLs. Renombrar genera una redirección 301 desde el slug anterior.",
+    "danger": "Zona de peligro",
+    "dangerHelp": "Eliminar esta organización borrará todos los miembros, eventos y escaneos. Esta acción no se puede deshacer.",
+    "delete": "Eliminar organización",
+    "confirmDelete": "Esto elimina permanentemente la organización y todos sus eventos, escaneos y miembros. ¿Continuar?"
   },
   "common": {
     "save": "Guardar",
     "saved": "Guardado",
     "cancel": "Cancelar",
+    "close": "Cerrar",
     "confirm": "Confirmar",
     "remove": "Eliminar",
     "loading": "Cargando…",
@@ -170,7 +218,8 @@
     "previous": "Anterior",
     "next": "Siguiente",
     "pageOf": "Página {{page}} de {{total}}",
-    "activity": "Actividad"
+    "activity": "Actividad",
+    "scannedBy": "Usuario"
   },
   "globalAdmin": {
     "title": "Administración global",
@@ -204,6 +253,27 @@
     "suspend": "Suspender",
     "reactivate": "Reactivar",
     "confirmStatus": "¿Cambiar esta organización al estado \"{{status}}\"?"
+  },
+  "event": {
+    "name": "Nombre",
+    "slug": "Slug",
+    "slugHint": "Minúsculas y guiones. Dejar vacío para derivar del nombre.",
+    "description": "Descripción",
+    "venue": "Lugar",
+    "startsAt": "Inicio",
+    "endsAt": "Fin",
+    "status": "Estado",
+    "create": "Crear evento",
+    "edit": "Editar evento",
+    "add": "Añadir evento",
+    "confirmCreate": "¿Crear el evento \"{{name}}\"?",
+    "duplicateName": "Ya existe un evento con este nombre.",
+    "archive": "Archivar",
+    "unarchive": "Desarchivar",
+    "archived": "Evento archivado.",
+    "unarchived": "Evento desarchivado.",
+    "liveLabel": "Activo",
+    "archivedLabel": "Archivado"
   },
   "wizard": {
     "title": "Bienvenido a OnePass",

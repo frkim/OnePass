@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
@@ -80,6 +82,103 @@ public class AuthController : ControllerBase
         }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { error = ex.Message }); }
+    }
+
+    /// <summary>
+    /// Initiates a password reset. Generates a one-time token (valid 1 hour),
+    /// stores a SHA-256 hash of the token on the user entity, and logs the
+    /// reset link to the console (no real e-mail in dev). Returns 200 even
+    /// when the email is unknown to prevent account enumeration (OWASP A07).
+    /// Users who only have external identities (Google / Microsoft) are
+    /// silently skipped — they cannot reset a password they never set.
+    /// </summary>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [EnableRateLimiting(FairUseRateLimiter.AnonymousPolicyName)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req, CancellationToken ct)
+    {
+        // Always return the same shape to avoid account enumeration.
+        var ok = new { message = "If this email is registered, a reset link has been sent." };
+
+        if (string.IsNullOrWhiteSpace(req.Email))
+            return Ok(ok);
+
+        var user = await _users.FindByEmailOrUsernameAsync(req.Email.Trim(), ct);
+        if (user is null || !user.IsActive)
+            return Ok(ok);
+
+        // Skip external-only accounts (Google / Microsoft) — they have no
+        // password they could reset.
+        if (user.ExternalIdentities.Count > 0 && string.IsNullOrEmpty(user.PasswordHash))
+            return Ok(ok);
+
+        // Generate a cryptographically random token
+        var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+        // Store the SHA-256 hash so that a DB leak doesn't grant reset access.
+        user.PasswordResetTokenHash = HashToken(rawToken);
+        user.PasswordResetTokenExpiry = DateTimeOffset.UtcNow.AddHours(1);
+        await _users.UpdateAsync(user, ct);
+
+        // In a production system this would be an email. For dev we log the
+        // link to the console so testers can copy-paste it.
+        var resetUrl = $"{Request.Scheme}://{Request.Host}/reset-password?token={Uri.EscapeDataString(rawToken)}";
+        _logger.LogWarning("PASSWORD RESET LINK for {Email}: {Url}", user.Email, resetUrl);
+
+        return Ok(ok);
+    }
+
+    /// <summary>
+    /// Completes a password reset. Validates the token, checks expiry,
+    /// enforces password complexity, and updates the hash.
+    /// </summary>
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [EnableRateLimiting(FairUseRateLimiter.AnonymousPolicyName)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(req.Token) || string.IsNullOrWhiteSpace(req.NewPassword))
+            return BadRequest(new { error = "Token and new password are required." });
+
+        var tokenHash = HashToken(req.Token);
+
+        // Find the user whose stored hash matches.
+        UserEntity? user = null;
+        var allUsers = await _users.ListAsync(ct);
+        foreach (var u in allUsers)
+        {
+            if (!string.IsNullOrEmpty(u.PasswordResetTokenHash) &&
+                u.PasswordResetTokenHash == tokenHash)
+            {
+                user = u;
+                break;
+            }
+        }
+
+        if (user is null || user.PasswordResetTokenExpiry is null || user.PasswordResetTokenExpiry < DateTimeOffset.UtcNow)
+            return BadRequest(new { error = "This reset link is invalid or has expired." });
+
+        // Enforce the same password policy as registration.
+        if (req.NewPassword.Length < 8)
+            return BadRequest(new { error = "Password must be at least 8 characters." });
+        if (!req.NewPassword.Any(char.IsUpper))
+            return BadRequest(new { error = "Password must contain at least one uppercase letter." });
+        if (!req.NewPassword.Any(c => !char.IsLetterOrDigit(c)))
+            return BadRequest(new { error = "Password must contain at least one special character." });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+        user.PasswordResetTokenHash = null;
+        user.PasswordResetTokenExpiry = null;
+        await _users.UpdateAsync(user, ct);
+
+        _logger.LogInformation("Password reset completed for {Email}.", user.Email);
+        return Ok(new { message = "Password has been reset successfully." });
+    }
+
+    private static string HashToken(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToBase64String(bytes);
     }
 
     /// <summary>
@@ -333,6 +432,7 @@ public class AuthController : ControllerBase
             language = User.FindFirst("lang")?.Value ?? "en",
             allowedActivityIds = user?.AllowedActivityIds ?? new List<string>(),
             defaultActivityId = user?.DefaultActivityId,
+            defaultEventId = user?.DefaultEventId,
         };
     }
 
@@ -352,6 +452,10 @@ public class AuthController : ControllerBase
                 return BadRequest(new { error = "Default activity must be one of the allowed activities." });
             user.DefaultActivityId = d;
         }
+        if (req.DefaultEventId is not null)
+        {
+            user.DefaultEventId = string.IsNullOrWhiteSpace(req.DefaultEventId) ? null : req.DefaultEventId.Trim();
+        }
         if (req.DisplayName is not null)
         {
             user.DisplayName = string.IsNullOrWhiteSpace(req.DisplayName) ? null : req.DisplayName.Trim();
@@ -366,7 +470,7 @@ public class AuthController : ControllerBase
             }
         }
         await _users.UpdateAsync(user, ct);
-        return new { defaultActivityId = user.DefaultActivityId, displayName = user.DisplayName ?? user.Username, language = user.PreferredLanguage };
+        return new { defaultActivityId = user.DefaultActivityId, defaultEventId = user.DefaultEventId, displayName = user.DisplayName ?? user.Username, language = user.PreferredLanguage };
     }
 
     /// <summary>
@@ -383,14 +487,30 @@ public class AuthController : ControllerBase
 public class UsersController : ControllerBase
 {
     private readonly IUserService _users;
+    private readonly ITenantContext _tenant;
+    private readonly IMembershipService _memberships;
 
-    public UsersController(IUserService users) => _users = users;
+    public UsersController(IUserService users, ITenantContext tenant, IMembershipService memberships)
+    {
+        _users = users;
+        _tenant = tenant;
+        _memberships = memberships;
+    }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserResponse>>> List(CancellationToken ct)
     {
-        var list = await _users.ListAsync(ct);
-        return Ok(list.Select(Map));
+        if (!_tenant.HasTenant)
+            return Ok(Enumerable.Empty<UserResponse>());
+
+        var members = await _memberships.ListForOrgAsync(_tenant.OrgId, ct);
+        var memberUserIds = members.Select(m => m.UserId).ToHashSet(StringComparer.Ordinal);
+
+        var allUsers = await _users.ListAsync(ct);
+        var filtered = allUsers
+            .Where(u => u.Role != Roles.GlobalAdmin && memberUserIds.Contains(u.RowKey))
+            .Select(Map);
+        return Ok(filtered);
     }
 
     [HttpPost]
@@ -444,8 +564,45 @@ public class UsersController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken ct)
     {
+        var user = await _users.GetByIdAsync(id, ct);
+        if (user is null) return NotFound();
+
+        // Prevent deleting the last Admin in the current organisation.
+        if (user.Role == Roles.Admin && _tenant.HasTenant)
+        {
+            var members = await _memberships.ListForOrgAsync(_tenant.OrgId, ct);
+            var memberUserIds = members.Select(m => m.UserId).ToHashSet(StringComparer.Ordinal);
+            var allUsers = await _users.ListAsync(ct);
+            var adminCount = allUsers.Count(u => u.Role == Roles.Admin && u.RowKey != id && memberUserIds.Contains(u.RowKey));
+            if (adminCount == 0)
+                return Conflict(new { code = "last_admin", error = "Cannot delete the last admin of the organisation." });
+        }
+
         await _users.DeleteAsync(id, ct);
         return NoContent();
+    }
+
+    [HttpPost("{id}/reset-password")]
+    public async Task<IActionResult> AdminResetPassword(string id, [FromBody] AdminResetPasswordRequest req, CancellationToken ct)
+    {
+        var user = await _users.GetByIdAsync(id, ct);
+        if (user is null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(req.NewPassword))
+            return BadRequest(new { error = "New password is required." });
+        if (req.NewPassword.Length < 8)
+            return BadRequest(new { error = "Password must be at least 8 characters." });
+        if (!req.NewPassword.Any(char.IsUpper))
+            return BadRequest(new { error = "Password must contain at least one uppercase letter." });
+        if (!req.NewPassword.Any(c => !char.IsLetterOrDigit(c)))
+            return BadRequest(new { error = "Password must contain at least one special character." });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+        user.PasswordResetTokenHash = null;
+        user.PasswordResetTokenExpiry = null;
+        await _users.UpdateAsync(user, ct);
+
+        return Ok(new { message = "Password has been reset successfully." });
     }
 
     private static UserResponse Map(UserEntity u) =>

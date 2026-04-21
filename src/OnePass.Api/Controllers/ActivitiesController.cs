@@ -18,17 +18,26 @@ public class ActivitiesController : ControllerBase
     private readonly IParticipantService _participants;
     private readonly IScanService _scans;
     private readonly Repositories.ITableStoreFactory _factory;
+    private readonly Auth.ITenantContext _tenant;
+    private readonly IEventService _events;
+    private readonly IUserService _users;
 
     public ActivitiesController(
         IActivityService activities,
         IParticipantService participants,
         IScanService scans,
-        Repositories.ITableStoreFactory factory)
+        Repositories.ITableStoreFactory factory,
+        Auth.ITenantContext tenant,
+        IEventService events,
+        IUserService users)
     {
         _activities = activities;
         _participants = participants;
         _scans = scans;
         _factory = factory;
+        _tenant = tenant;
+        _events = events;
+        _users = users;
     }
 
     [HttpGet]
@@ -53,6 +62,18 @@ public class ActivitiesController : ControllerBase
         try
         {
             var userId = User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub) ?? "";
+            var orgId = _tenant.OrgId;
+
+            // Require an explicit eventId linking the activity to an existing event.
+            if (string.IsNullOrWhiteSpace(req.EventId))
+                return BadRequest(new { error = "An event must be selected when creating an activity." });
+
+            var events = _tenant.HasTenant ? await _events.ListForOrgAsync(orgId, ct) : [];
+            var targetEvent = events.FirstOrDefault(e => e.RowKey == req.EventId);
+            if (targetEvent is null)
+                return BadRequest(new { error = "The specified event does not exist." });
+
+            var eventId = targetEvent.RowKey;
             var entity = new ActivityEntity
             {
                 Name = req.Name,
@@ -61,6 +82,8 @@ public class ActivitiesController : ControllerBase
                 EndsAt = req.EndsAt,
                 MaxScansPerParticipant = req.MaxScansPerParticipant <= 0 ? -1 : req.MaxScansPerParticipant,
                 CreatedByUserId = userId,
+                OrgId = orgId,
+                EventId = eventId,
             };
             var created = await _activities.CreateAsync(entity, ct);
             return CreatedAtAction(nameof(Get), new { id = created.RowKey }, Map(created));
@@ -172,7 +195,11 @@ public class ActivitiesController : ControllerBase
     {
         try
         {
-            var p = await _participants.CreateAsync(id, req.DisplayName, req.Email, ct);
+            // Resolve OrgId/EventId from the parent activity.
+            var activity = await _activities.GetAsync(id, ct);
+            var orgId = activity?.OrgId ?? _tenant.OrgId;
+            var eventId = activity?.EventId ?? string.Empty;
+            var p = await _participants.CreateAsync(id, req.DisplayName, req.Email, orgId, eventId, ct);
             return Ok(new ParticipantResponse(p.RowKey, p.PartitionKey, p.DisplayName, p.Email));
         }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
@@ -185,7 +212,6 @@ public class ActivitiesController : ControllerBase
     /// dashboard counters and scan history would dangle.
     /// </summary>
     [HttpDelete("{id}/participants/{participantId}")]
-    [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> DeleteParticipant(string id, string participantId, CancellationToken ct)
     {
         var participant = await _participants.GetAsync(id, participantId, ct);
@@ -238,13 +264,15 @@ public class ActivitiesController : ControllerBase
     public async Task<ActionResult<IEnumerable<ScanResponse>>> ListScans(string id, CancellationToken ct)
     {
         var scans = await _scans.ListForActivityAsync(id, ct: ct);
-        return Ok(scans.Select(s => new ScanResponse(s.RowKey, s.PartitionKey, s.ParticipantId, s.ScannedByUserId, s.ScannedAt)));
+        var userIds = scans.Select(s => s.ScannedByUserId).Distinct().ToList();
+        var allUsers = await _users.ListAsync(ct);
+        var userMap = allUsers.Where(u => userIds.Contains(u.RowKey)).ToDictionary(u => u.RowKey, u => u.Username);
+        return Ok(scans.Select(s => new ScanResponse(s.RowKey, s.PartitionKey, s.ParticipantId, s.ScannedByUserId, s.ScannedAt, userMap.GetValueOrDefault(s.ScannedByUserId))));
     }
 
     // ---- Reporting & analytics ----
 
     [HttpGet("{id}/stats")]
-    [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<ActivityStats>> Stats(string id, CancellationToken ct) =>
         await _scans.GetStatsAsync(id, ct);
 
@@ -276,5 +304,5 @@ public class ActivitiesController : ControllerBase
     }
 
     private static ActivityResponse Map(ActivityEntity a) =>
-        new(a.RowKey, a.Name, a.Description, a.StartsAt, a.EndsAt, a.MaxScansPerParticipant, a.IsActive, a.IsDefault);
+        new(a.RowKey, a.Name, a.Description, a.StartsAt, a.EndsAt, a.MaxScansPerParticipant, a.IsActive, a.IsDefault, a.EventId);
 }

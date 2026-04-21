@@ -26,6 +26,8 @@ export function AppLayout() {
   const [creating, setCreating] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
+  const navMenuRef = useRef<HTMLDivElement | null>(null);
   // Drives the first-run wizard: shown when an Admin signs in for the
   // first time without belonging to any organisation. The "skip"
   // affordance sets `wizardDismissed` so it does not pop again on every
@@ -39,8 +41,8 @@ export function AppLayout() {
   const [maintenanceBanner, setMaintenanceBanner] = useState<string | null>(null);
 
   const showFirstRunWizard =
-    wizardOpen ||
-    (!!username && role === 'Admin' && orgs.length === 0 && !wizardDismissed);
+    role !== 'GlobalAdmin' && (wizardOpen ||
+    (!!username && role === 'Admin' && orgs.length === 0 && !wizardDismissed));
 
   useEffect(() => {
     if (!username || !active?.id) { setEventName(''); return; }
@@ -76,12 +78,27 @@ export function AppLayout() {
     };
   }, [userMenuOpen]);
 
+  // Close the nav menu when clicking elsewhere or pressing Escape.
+  useEffect(() => {
+    if (!navMenuOpen) return;
+    function onClick(e: MouseEvent) {
+      if (navMenuRef.current && !navMenuRef.current.contains(e.target as Node)) setNavMenuOpen(false);
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setNavMenuOpen(false); }
+    window.addEventListener('mousedown', onClick);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onClick);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [navMenuOpen]);
+
   if (loading) return <div style={{ padding: '2rem' }}>{t('common.loading')}</div>;
   if (!username) return <Navigate to="/login" replace />;
 
   async function onCreateOrg(data: OrgDialogData) {
     try {
-      const created = await api.createOrg(data.name, data.slug || undefined);
+      const created = await api.createOrg(data.name, data.slug || undefined, data.orgId || undefined);
       await refresh(created.id);
       setCreating(false);
     } catch (err) {
@@ -96,6 +113,30 @@ export function AppLayout() {
     <div className="app-shell">
       <header className="app-header">
         <div className="app-header-left">
+          <div className="nav-menu" ref={navMenuRef}>
+            <button
+              type="button"
+              className="nav-menu-trigger"
+              aria-label="Navigation menu"
+              aria-haspopup="menu"
+              aria-expanded={navMenuOpen}
+              onClick={() => setNavMenuOpen(o => !o)}
+            >
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z" />
+              </svg>
+            </button>
+            {navMenuOpen && (
+              <div className="nav-menu-panel" role="menu">
+                {role === 'Admin' && <NavLink role="menuitem" to="/org/settings" onClick={() => setNavMenuOpen(false)}>{t('nav.orgSettings', 'Organisation')}</NavLink>}
+                {role === 'Admin' && <NavLink role="menuitem" to="/events" onClick={() => setNavMenuOpen(false)}>{t('nav.events')}</NavLink>}
+                {role === 'Admin' && <NavLink role="menuitem" to="/activities" onClick={() => setNavMenuOpen(false)}>{t('nav.activities')}</NavLink>}
+                {role === 'Admin' && <NavLink role="menuitem" to="/users" onClick={() => setNavMenuOpen(false)}>{t('nav.users')}</NavLink>}
+                {role !== 'GlobalAdmin' && <NavLink role="menuitem" to="/parameters" onClick={() => setNavMenuOpen(false)}>{t('nav.parameters')}</NavLink>}
+                {role === 'GlobalAdmin' && <NavLink role="menuitem" to="/admin/global" onClick={() => setNavMenuOpen(false)}>{t('nav.globalAdmin', 'Global admin')}</NavLink>}
+              </div>
+            )}
+          </div>
           <NavLink to="/" className="brand" aria-label={t('nav.scan')}>
             <img src="/favicon.svg" alt="" />
             <span>{t('app.title')}</span>
@@ -103,17 +144,13 @@ export function AppLayout() {
         </div>
 
         <nav className="app-header-nav" aria-label={t('nav.primary', 'Primary') as string}>
-          <NavLink to="/" end>{t('nav.scan')}</NavLink>
-          {role === 'Admin' && <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>}
-          <NavLink to="/activities">{t('nav.activities')}</NavLink>
-          {role === 'Admin' && <NavLink to="/users">{t('nav.users')}</NavLink>}
-          {role === 'Admin' && <NavLink to="/org/settings">{t('nav.orgSettings', 'Organisation')}</NavLink>}
-          {role === 'Admin' && <NavLink to="/admin/global">{t('nav.globalAdmin', 'Global admin')}</NavLink>}
-          <NavLink to="/parameters">{t('nav.parameters')}</NavLink>
+          {role !== 'GlobalAdmin' && <NavLink to="/" end>{t('nav.scan')}</NavLink>}
+          {role !== 'GlobalAdmin' && <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>}
+          {role === 'GlobalAdmin' && <NavLink to="/admin/global">{t('nav.globalAdmin', 'Global admin')}</NavLink>}
         </nav>
 
         <div className="app-header-right">
-          {orgs.length > 0 && (
+          {role !== 'GlobalAdmin' && orgs.length > 0 && (
             <div className="org-stack">
               {active && (
                 <div className="org-chip" title={t('nav.activeOrg', 'Active organisation') as string}>
@@ -135,7 +172,7 @@ export function AppLayout() {
                     {o.name} ({o.role})
                   </option>
                 ))}
-                <option value="__new">{t('nav.createOrg', '+ Create organisation…')}</option>
+                {role === 'Admin' && <option value="__new">{t('nav.createOrg', '+ Create organisation…')}</option>}
               </select>
             </div>
           )}
@@ -211,6 +248,22 @@ export function AppLayout() {
 export function RequireAdmin({ children }: { children: ReactNode }) {
   const { role, loading } = useAuth();
   if (loading) return null;
+  if (role === 'GlobalAdmin') return <Navigate to="/admin/global" replace />;
   if (role !== 'Admin') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+export function RequireGlobalAdmin({ children }: { children: ReactNode }) {
+  const { role, loading } = useAuth();
+  if (loading) return null;
+  if (role !== 'GlobalAdmin') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+/** Redirects GlobalAdmin users away from org-level pages to the global admin dashboard. */
+export function GlobalAdminRedirect({ children }: { children: ReactNode }) {
+  const { role, loading } = useAuth();
+  if (loading) return null;
+  if (role === 'GlobalAdmin') return <Navigate to="/admin/global" replace />;
   return <>{children}</>;
 }

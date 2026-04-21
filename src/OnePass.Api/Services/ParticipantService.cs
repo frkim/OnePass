@@ -5,7 +5,7 @@ namespace OnePass.Api.Services;
 
 public interface IParticipantService
 {
-    Task<ParticipantEntity> CreateAsync(string activityId, string displayName, string? email, CancellationToken ct = default);
+    Task<ParticipantEntity> CreateAsync(string activityId, string displayName, string? email, string orgId = "", string eventId = "", CancellationToken ct = default);
     Task<ParticipantEntity?> GetAsync(string activityId, string participantId, CancellationToken ct = default);
     Task<IReadOnlyList<ParticipantEntity>> ListForActivityAsync(string activityId, CancellationToken ct = default);
     Task UpsertAsync(ParticipantEntity participant, CancellationToken ct = default);
@@ -21,7 +21,7 @@ public sealed class ParticipantService : IParticipantService
         _participants = factory.GetRepository<ParticipantEntity>(TableName);
     }
 
-    public async Task<ParticipantEntity> CreateAsync(string activityId, string displayName, string? email, CancellationToken ct = default)
+    public async Task<ParticipantEntity> CreateAsync(string activityId, string displayName, string? email, string orgId = "", string eventId = "", CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(activityId)) throw new ArgumentException("ActivityId required", nameof(activityId));
         if (string.IsNullOrWhiteSpace(displayName)) throw new ArgumentException("DisplayName required", nameof(displayName));
@@ -31,6 +31,8 @@ public sealed class ParticipantService : IParticipantService
             PartitionKey = activityId,
             DisplayName = displayName.Trim(),
             Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
+            OrgId = orgId,
+            EventId = eventId,
         };
         await _participants.UpsertAsync(p, ct);
         return p;

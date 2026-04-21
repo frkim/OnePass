@@ -5,13 +5,15 @@
     "language": "Language"
   },
   "nav": {
+    "menu": "Menu",
     "dashboard": "Dashboard",
     "activities": "Activities",
-    "scan": "Scan",
+    "events": "Events",
+    "scan": "Badge Scanner",
     "users": "Users",
-    "parameters": "Settings",
+    "parameters": "My Settings",
     "orgSettings": "Organisation",
-    "profile": "Profile",
+    "profile": "My Profile",
     "help": "Help",
     "setupWizard": "Setup wizard",
     "globalAdmin": "Global admin",
@@ -41,6 +43,7 @@
     "accountDisabled": "This account has been disabled.",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
+    "forgotPassword": "Forgot password?",
     "marketingTitle": "Welcome to OnePass",
     "marketingDesc": "OnePass is the all-in-one badge scanning & activity tracking platform for in-person events. Create activities, invite your team, scan participants at the door — and get real-time analytics, CSV exports, and a fully offline-capable progressive web app.",
     "marketingFeature1": "Real-time scan tracking & dashboards",
@@ -70,8 +73,28 @@
     "passwordUppercase": "At least one uppercase letter",
     "passwordSpecialChar": "At least one special character"
   },
+  "forgotPassword": {
+    "title": "Forgot password",
+    "description": "Enter your email address and we'll send you a link to reset your password.",
+    "email": "Email",
+    "submit": "Send reset link",
+    "sent": "If this email is registered, a reset link has been sent. Check your inbox (or the API console in dev mode).",
+    "error": "Something went wrong. Please try again.",
+    "backToLogin": "Back to sign in"
+  },
+  "resetPassword": {
+    "title": "Reset password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "submit": "Reset password",
+    "success": "Your password has been reset successfully.",
+    "error": "Reset failed. The link may have expired.",
+    "missingToken": "Invalid reset link. Please request a new one.",
+    "requestNew": "Request a new reset link",
+    "goToLogin": "Sign in with your new password"
+  },
   "dashboard": {
-    "title": "Admin dashboard",
+    "title": "Scan Dashboard",
     "totalActivities": "Total activities",
     "totalScans": "Total scans",
     "uniqueParticipants": "Unique participants",
@@ -88,7 +111,7 @@
     "limitMaxScans": "Limit max scans per participant",
     "unlimited": "Unlimited",
     "create": "Create activity",
-    "participants": "Participants",
+    "participants": "Scan History",
     "addParticipant": "Add participant",
     "displayName": "Display name",
     "email": "Email (optional)",
@@ -104,10 +127,13 @@
     "edit": "Edit",
     "rename": "Rename",
     "renameTitle": "Rename activity",
-    "renameNewName": "New name"
+    "renameNewName": "New name",
+    "event": "Event",
+    "selectEvent": "Select an event…",
+    "eventRequired": "An event must be selected."
   },
   "scan": {
-    "title": "Scan participant",
+    "title": "Badge Scanner",
     "chooseActivity": "Choose activity",
     "participantId": "Participant ID (QR)",
     "submit": "Record Scan Manually",
@@ -127,6 +153,7 @@
   },
   "users": {
     "title": "Users",
+    "add": "Add user",
     "create": "Create user",
     "email": "Email",
     "username": "Username",
@@ -140,23 +167,45 @@
     "disable": "Disable",
     "allowedActivities": "Allowed activities",
     "defaultActivity": "Default activity",
-    "selectAtLeastOneActivity": "Select at least one activity"
+    "selectAtLeastOneActivity": "Select at least one activity",
+    "resetPassword": "Reset password",
+    "resetPasswordFor": "Set a new password for {{username}}.",
+    "newPassword": "New password",
+    "resetPasswordSuccess": "Password reset for {{username}}"
   },
   "parameters": {
-    "title": "Settings",
-    "eventName": "Event name",
-    "eventNameHelp": "Public-facing name shown across the application.",
+    "title": "My Settings",
+    "defaultEvent": "Default event",
+    "defaultEventHelp": "Pre-selected event for scanning and activities.",
     "defaultActivity": "Default activity",
     "defaultActivityHelp": "Pre-selected on the Scan page when a user has not chosen their own default.",
+    "myDefaults": "My defaults",
+    "myDefaultEvent": "My default event",
+    "myDefaultEventHelp": "Overrides the organisation default event for your account.",
     "myDefaultActivity": "My default activity",
-    "myDefaultActivityHelp": "Overrides the global default for your account.",
+    "myDefaultActivityHelp": "Overrides the global default activity for your account.",
     "saved": "Saved.",
     "none": "None"
+  },
+  "orgSettings": {
+    "title": "Organisation settings",
+    "identity": "Identity",
+    "orgId": "Organisation ID",
+    "defaults": "Defaults",
+    "name": "Display name",
+    "slug": "Slug",
+    "slugPattern": "Lowercase letters, digits and hyphens only.",
+    "slugHelp": "Used in URLs. Renaming generates a 301 redirect from the old slug.",
+    "danger": "Danger zone",
+    "dangerHelp": "Deleting this organisation will remove every member, event and scan. This cannot be undone.",
+    "delete": "Delete organisation",
+    "confirmDelete": "This permanently deletes the organisation and every event, scan and member it owns. Continue?"
   },
   "common": {
     "save": "Save",
     "saved": "Saved",
     "cancel": "Cancel",
+    "close": "Close",
     "confirm": "Confirm",
     "remove": "Remove",
     "loading": "Loading…",
@@ -175,7 +224,8 @@
     "previous": "Previous",
     "next": "Next",
     "pageOf": "Page {{page}} of {{total}}",
-    "activity": "Activity"
+    "activity": "Activity",
+    "scannedBy": "User"
   },
   "globalAdmin": {
     "title": "Global administration",
@@ -210,6 +260,27 @@
     "reactivate": "Reactivate",
     "confirmStatus": "Set this organisation to status \"{{status}}\"?"
   },
+  "event": {
+    "name": "Name",
+    "slug": "Slug",
+    "slugHint": "Lower-case, dashes only. Leave blank to derive from the name.",
+    "description": "Description",
+    "venue": "Venue",
+    "startsAt": "Starts",
+    "endsAt": "Ends",
+    "status": "Status",
+    "create": "Create event",
+    "edit": "Edit event",
+    "add": "Add event",
+    "confirmCreate": "Create event \"{{name}}\"?",
+    "duplicateName": "An event with this name already exists.",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "archived": "Event archived.",
+    "unarchived": "Event unarchived.",
+    "liveLabel": "Live",
+    "archivedLabel": "Archived"
+  },
   "wizard": {
     "title": "Welcome to OnePass",
     "progress": "Setup progress",
@@ -236,9 +307,14 @@
     "org": {
       "name": "Organisation name",
       "namePlaceholder": "e.g. Microsoft",
-      "slug": "URL slug (optional)",
+      "orgId": "Organisation ID",
+      "orgIdPlaceholder": "e.g. microsoft",
+      "orgIdHint": "Max 16 chars, lowercase, digits, underscores and dashes only.",
+      "slug": "URL slug",
       "slugPlaceholder": "e.g. microsoft",
-      "slugHint": "Lower-case, dashes only. Leave blank to derive it from the name."
+      "slugHint": "Lower-case, dashes only. Leave blank to derive it from the name.",
+      "slugHintAuto": "Auto-filled from Organisation ID. Lower-case, dashes only.",
+      "slugTip": "The slug appears in all public URLs for your organisation, e.g. https://onepass.app/<strong>microsoft</strong>/events. Choose something short and recognisable."
     },
     "event": {
       "name": "Event name",

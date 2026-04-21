@@ -30,7 +30,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (tok) headers.set('Authorization', `Bearer ${tok}`);
   const orgId = getActiveOrgId();
   if (orgId) headers.set('X-OnePass-Org', orgId);
-  const resp = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  let resp: Response;
+  try {
+    resp = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  } catch {
+    throw new Error('The server is unavailable. Please check that the backend is running and try again.');
+  }
   if (resp.status === 401) {
     setToken(null);
     throw new Error('unauthorized');
@@ -89,6 +94,7 @@ export interface Activity {
   maxScansPerParticipant: number;
   isActive: boolean;
   isDefault: boolean;
+  eventId?: string;
 }
 
 export interface Participant {
@@ -104,6 +110,7 @@ export interface Scan {
   participantId: string;
   scannedByUserId: string;
   scannedAt: string;
+  scannedByUsername?: string | null;
 }
 
 export interface ActivityStats {
@@ -145,6 +152,7 @@ export interface Organization {
   previousSlug?: string | null;
   brandingLogoUrl?: string | null;
   brandingPrimaryColor?: string | null;
+  defaultEventId?: string | null;
 }
 export interface EventInfo {
   id: string;
@@ -188,6 +196,7 @@ export interface Me {
   language: string;
   allowedActivityIds: string[];
   defaultActivityId?: string | null;
+  defaultEventId?: string | null;
 }
 
 export const api = {
@@ -201,6 +210,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, username, password, role: 'User' }),
     }),
+  forgotPassword: (email: string) =>
+    request<{ message: string }>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, newPassword: string) =>
+    request<{ message: string }>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    }),
   /** Discovery endpoint listing the federated identity providers wired in this environment. */
   getProviders: () => request<{ google: boolean; microsoft: boolean }>('/api/auth/providers'),
   /** Live availability check used by the registration form (rate-limited server-side). */
@@ -212,8 +231,8 @@ export const api = {
   platformStatus: () =>
     request<PlatformStatus>('/api/auth/platform-status'),
   me: () => request<Me>('/api/auth/me'),
-  updateMe: (patch: { defaultActivityId?: string | null; displayName?: string; language?: string }) =>
-    request<{ defaultActivityId: string | null; displayName: string; language: string }>('/api/auth/me', {
+  updateMe: (patch: { defaultActivityId?: string | null; defaultEventId?: string | null; displayName?: string; language?: string }) =>
+    request<{ defaultActivityId: string | null; defaultEventId: string | null; displayName: string; language: string }>('/api/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(patch),
     }),
@@ -225,10 +244,10 @@ export const api = {
   listMyOrgs: () => request<OrgSummary[]>('/api/me/orgs'),
   switchActiveOrg: (orgId: string) =>
     request<OrgSummary>('/api/me/active-org', { method: 'POST', body: JSON.stringify({ orgId }) }),
-  createOrg: (name: string, slug?: string) =>
-    request<Organization>('/api/orgs', { method: 'POST', body: JSON.stringify({ name, slug }) }),
+  createOrg: (name: string, slug?: string, orgId?: string) =>
+    request<Organization>('/api/orgs', { method: 'POST', body: JSON.stringify({ name, slug, orgId }) }),
   getOrg: (orgId: string) => request<Organization>(`/api/orgs/${orgId}`),
-  updateOrg: (orgId: string, patch: Partial<Pick<Organization, 'name' | 'slug' | 'brandingLogoUrl' | 'brandingPrimaryColor'>> & { retentionDays?: number }) =>
+  updateOrg: (orgId: string, patch: Partial<Pick<Organization, 'name' | 'slug' | 'brandingLogoUrl' | 'brandingPrimaryColor' | 'defaultEventId'>> & { retentionDays?: number }) =>
     request<Organization>(`/api/orgs/${orgId}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   deleteOrg: (orgId: string) => request<void>(`/api/orgs/${orgId}`, { method: 'DELETE' }),
 
@@ -313,6 +332,8 @@ export const api = {
   updateUser: (id: string, patch: { isActive?: boolean; defaultActivityId?: string | null; allowedActivityIds?: string[] }) =>
     request<AppUser>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   deleteUser: (id: string) => request<void>(`/api/users/${id}`, { method: 'DELETE' }),
+  adminResetPassword: (id: string, newPassword: string) =>
+    request<{ message: string }>(`/api/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ newPassword }) }),
 
   // ---- Global / Platform administration (PlatformAdmin only) -------------
   globalAdmin: {

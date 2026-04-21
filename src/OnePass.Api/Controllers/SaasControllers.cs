@@ -106,6 +106,7 @@ public class OrganizationsController : ControllerBase
     /// and the org is automatically given a default <see cref="EventEntity"/>.
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<OrganizationResponse>> Create([FromBody] CreateOrganizationRequest req, CancellationToken ct)
     {
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
@@ -162,6 +163,7 @@ public class OrganizationsController : ControllerBase
             if (req.BrandingLogoUrl is not null) org.BrandingLogoUrl = string.IsNullOrWhiteSpace(req.BrandingLogoUrl) ? null : req.BrandingLogoUrl.Trim();
             if (req.BrandingPrimaryColor is not null) org.BrandingPrimaryColor = string.IsNullOrWhiteSpace(req.BrandingPrimaryColor) ? null : req.BrandingPrimaryColor.Trim();
             if (req.RetentionDays.HasValue) org.RetentionDays = req.RetentionDays.Value > 0 ? req.RetentionDays.Value : null;
+            if (req.DefaultEventId is not null) org.DefaultEventId = string.IsNullOrWhiteSpace(req.DefaultEventId) ? null : req.DefaultEventId.Trim();
             await _orgs.UpdateAsync(org, ct);
             if (!string.IsNullOrWhiteSpace(req.Slug))
                 org = await _orgs.RenameSlugAsync(orgId, req.Slug!, ct);
@@ -203,7 +205,7 @@ public class OrganizationsController : ControllerBase
 
     internal static OrganizationResponse Map(OrganizationEntity o) =>
         new(o.RowKey, o.Name, o.Slug, o.OwnerUserId, o.Status, o.Region, o.Plan, o.CreatedAt,
-            o.PreviousSlug, o.BrandingLogoUrl, o.BrandingPrimaryColor);
+            o.PreviousSlug, o.BrandingLogoUrl, o.BrandingPrimaryColor, o.DefaultEventId);
 }
 
 // =============================================================================

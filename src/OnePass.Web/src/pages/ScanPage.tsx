@@ -42,6 +42,7 @@ export default function ScanPage() {
   const [cameraOn, setCameraOn] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [scanTimes, setScanTimes] = useState<Record<string, string>>({});
+  const [scannedByUsers, setScannedByUsers] = useState<Record<string, string>>({});
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const scannerRef = useRef<QrScanner | null>(null);
@@ -76,21 +77,25 @@ export default function ScanPage() {
 
   // Load participants + scan times when the selected activity changes
   const loadParticipants = useCallback(async (aid: string) => {
-    if (!aid) { setParticipants([]); setScanTimes({}); return; }
+    if (!aid) { setParticipants([]); setScanTimes({}); setScannedByUsers({}); return; }
     setLoadingParticipants(true);
     try {
       const [p, scans] = await Promise.all([api.listParticipants(aid), api.listScans(aid)]);
       setParticipants(p);
       const times: Record<string, string> = {};
+      const users: Record<string, string> = {};
       for (const s of scans) {
         if (!times[s.participantId] || s.scannedAt > times[s.participantId]) {
           times[s.participantId] = s.scannedAt;
+          users[s.participantId] = s.scannedByUsername ?? s.scannedByUserId;
         }
       }
       setScanTimes(times);
+      setScannedByUsers(users);
     } catch {
       setParticipants([]);
       setScanTimes({});
+      setScannedByUsers({});
     } finally {
       setLoadingParticipants(false);
     }
@@ -265,6 +270,7 @@ export default function ScanPage() {
                 setParticipants(prev => prev.filter(x => x.id !== p.id));
               }}
               scanTimes={scanTimes}
+              scannedByUsers={scannedByUsers}
               activityNames={activityNames}
             />
           )}

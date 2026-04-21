@@ -5,12 +5,14 @@
     "language": "Langue"
   },
   "nav": {
+    "menu": "Menu",
     "dashboard": "Tableau de bord",
     "activities": "Activités",
-    "scan": "Scanner",
+    "events": "Événements",
+    "scan": "Scanner de badges",
     "users": "Utilisateurs",
-    "parameters": "Paramètres",
-    "profile": "Profil",
+    "parameters": "Mes paramètres",
+    "profile": "Mon profil",
     "help": "Aide",
     "setupWizard": "Assistant de configuration",
     "globalAdmin": "Administration globale",
@@ -36,6 +38,7 @@
     "accountDisabled": "Ce compte a été désactivé.",
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
     "marketingTitle": "Bienvenue sur OnePass",
     "marketingDesc": "OnePass est la plateforme tout-en-un de scan de badges et suivi d'activités pour les événements. Créez des activités, invitez votre équipe, scannez les participants — et obtenez des analyses en temps réel, des exports CSV et une application progressive fonctionnant hors ligne.",
     "marketingFeature1": "Suivi des scans et tableaux de bord en temps réel",
@@ -65,8 +68,28 @@
     "passwordUppercase": "Au moins une lettre majuscule",
     "passwordSpecialChar": "Au moins un caractère spécial"
   },
+  "forgotPassword": {
+    "title": "Mot de passe oublié",
+    "description": "Saisissez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "email": "E-mail",
+    "submit": "Envoyer le lien",
+    "sent": "Si cet e-mail est enregistré, un lien de réinitialisation a été envoyé. Vérifiez votre boîte de réception (ou la console API en mode dev).",
+    "error": "Une erreur est survenue. Veuillez réessayer.",
+    "backToLogin": "Retour à la connexion"
+  },
+  "resetPassword": {
+    "title": "Réinitialiser le mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le nouveau mot de passe",
+    "submit": "Réinitialiser",
+    "success": "Votre mot de passe a été réinitialisé avec succès.",
+    "error": "Échec de la réinitialisation. Le lien a peut-être expiré.",
+    "missingToken": "Lien de réinitialisation invalide. Veuillez en demander un nouveau.",
+    "requestNew": "Demander un nouveau lien",
+    "goToLogin": "Se connecter avec votre nouveau mot de passe"
+  },
   "dashboard": {
-    "title": "Tableau de bord administrateur",
+    "title": "Tableau de bord des scans",
     "totalActivities": "Activités totales",
     "totalScans": "Scans totaux",
     "uniqueParticipants": "Participants uniques",
@@ -83,7 +106,7 @@
     "limitMaxScans": "Limiter les scans par participant",
     "unlimited": "Illimité",
     "create": "Créer une activité",
-    "participants": "Participants",
+    "participants": "Historique des scans",
     "addParticipant": "Ajouter un participant",
     "displayName": "Nom affiché",
     "email": "E-mail (facultatif)",
@@ -98,10 +121,13 @@
     "add": "Ajouter une activité",
     "edit": "Modifier",    "rename": "Renommer",
     "renameTitle": "Renommer l’activité",
-    "renameNewName": "Nouveau nom"
+    "renameNewName": "Nouveau nom",
+    "event": "Événement",
+    "selectEvent": "Sélectionner un événement…",
+    "eventRequired": "Un événement doit être sélectionné."
   },
   "scan": {
-    "title": "Scanner un participant",
+    "title": "Scanner de badges",
     "chooseActivity": "Choisir une activité",
     "participantId": "Identifiant participant (QR)",
     "submit": "Enregistrer le scan manuellement",
@@ -121,6 +147,7 @@
   },
   "users": {
     "title": "Utilisateurs",
+    "add": "Ajouter un utilisateur",
     "create": "Créer un utilisateur",
     "email": "E-mail",
     "username": "Identifiant",
@@ -134,23 +161,45 @@
     "disable": "Désactiver",
     "allowedActivities": "Activités autorisées",
     "defaultActivity": "Activité par défaut",
-    "selectAtLeastOneActivity": "Sélectionnez au moins une activité"
+    "selectAtLeastOneActivity": "Sélectionnez au moins une activité",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "resetPasswordFor": "Définir un nouveau mot de passe pour {{username}}.",
+    "newPassword": "Nouveau mot de passe",
+    "resetPasswordSuccess": "Mot de passe réinitialisé pour {{username}}"
   },
   "parameters": {
-    "title": "Paramètres",
-    "eventName": "Nom de l'événement",
-    "eventNameHelp": "Nom public affiché dans toute l'application.",
+    "title": "Mes paramètres",
+    "defaultEvent": "Événement par défaut",
+    "defaultEventHelp": "Événement pré-sélectionné pour le scan et les activités.",
     "defaultActivity": "Activité par défaut",
     "defaultActivityHelp": "Pré-sélectionnée sur la page Scanner si l'utilisateur n'a pas choisi son propre défaut.",
+    "myDefaults": "Mes défauts",
+    "myDefaultEvent": "Mon événement par défaut",
+    "myDefaultEventHelp": "Remplace l'événement par défaut de l'organisation pour votre compte.",
     "myDefaultActivity": "Mon activité par défaut",
-    "myDefaultActivityHelp": "Remplace le défaut global pour votre compte.",
+    "myDefaultActivityHelp": "Remplace l'activité par défaut globale pour votre compte.",
     "saved": "Enregistré.",
     "none": "Aucune"
+  },
+  "orgSettings": {
+    "title": "Paramètres de l'organisation",
+    "identity": "Identité",
+    "orgId": "Identifiant de l'organisation",
+    "defaults": "Valeurs par défaut",
+    "name": "Nom d'affichage",
+    "slug": "Slug",
+    "slugPattern": "Lettres minuscules, chiffres et tirets uniquement.",
+    "slugHelp": "Utilisé dans les URLs. Le renommage génère une redirection 301 depuis l'ancien slug.",
+    "danger": "Zone de danger",
+    "dangerHelp": "Supprimer cette organisation supprimera tous les membres, événements et scans. Cette action est irréversible.",
+    "delete": "Supprimer l'organisation",
+    "confirmDelete": "Cela supprime définitivement l'organisation et tous ses événements, scans et membres. Continuer ?"
   },
   "common": {
     "save": "Enregistrer",
     "saved": "Enregistré",
     "cancel": "Annuler",
+    "close": "Fermer",
     "confirm": "Confirmer",
     "remove": "Supprimer",
     "loading": "Chargement…",
@@ -169,7 +218,8 @@
     "previous": "Précédent",
     "next": "Suivant",
     "pageOf": "Page {{page}} sur {{total}}",
-    "activity": "Activité"
+    "activity": "Activité",
+    "scannedBy": "Utilisateur"
   },
   "globalAdmin": {
     "title": "Administration globale",
@@ -203,8 +253,27 @@
     "suspend": "Suspendre",
     "reactivate": "Réactiver",
     "confirmStatus": "Passer cette organisation au statut \"{{status}}\" ?"
-  },
-  "wizard": {
+  },  "event": {
+    "name": "Nom",
+    "slug": "Slug",
+    "slugHint": "Minuscules et tirets uniquement. Laissez vide pour dériver du nom.",
+    "description": "Description",
+    "venue": "Lieu",
+    "startsAt": "Début",
+    "endsAt": "Fin",
+    "status": "Statut",
+    "create": "Créer un événement",
+    "edit": "Modifier l'événement",
+    "add": "Ajouter un événement",
+    "confirmCreate": "Créer l'événement « {{name}} » ?",
+    "duplicateName": "Un événement avec ce nom existe déjà.",
+    "archive": "Archiver",
+    "unarchive": "Désarchiver",
+    "archived": "Événement archivé.",
+    "unarchived": "Événement désarchivé.",
+    "liveLabel": "Actif",
+    "archivedLabel": "Archivé"
+  },  "wizard": {
     "title": "Bienvenue sur OnePass",
     "progress": "Avancement de l'installation",
     "skip": "Plus tard",
@@ -230,9 +299,14 @@
     "org": {
       "name": "Nom de l'organisation",
       "namePlaceholder": "ex.\u202fMicrosoft",
-      "slug": "Slug d'URL (optionnel)",
+      "orgId": "Identifiant de l'organisation",
+      "orgIdPlaceholder": "ex.\u202fmicrosoft",
+      "orgIdHint": "16 car. max, minuscules, chiffres, tirets bas et tirets uniquement.",
+      "slug": "Slug d'URL",
       "slugPlaceholder": "ex.\u202fmicrosoft",
-      "slugHint": "Minuscules et tirets uniquement. Laissez vide pour dériver du nom."
+      "slugHint": "Minuscules et tirets uniquement. Laissez vide pour dériver du nom.",
+      "slugHintAuto": "Rempli automatiquement depuis l'identifiant. Minuscules et tirets uniquement.",
+      "slugTip": "Le slug apparaît dans toutes les URLs publiques de votre organisation, ex. https://onepass.app/<strong>microsoft</strong>/events. Choisissez quelque chose de court et reconnaissable."
     },
     "event": {
       "name": "Nom de l'événement",

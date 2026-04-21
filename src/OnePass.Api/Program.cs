@@ -153,7 +153,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(TenantPolicies.CanScan, p => p.RequireAuthenticatedUser()
         .AddRequirements(new OrgRoleRequirement(OrgRoles.CanScan, acceptLegacyAdmin: true)));
     options.AddPolicy(TenantPolicies.PlatformAdmin, p => p.RequireAuthenticatedUser()
-        .AddRequirements(new OrgRoleRequirement(new[] { OrgRoles.PlatformAdmin }, acceptLegacyAdmin: true)));
+        .AddRequirements(new OrgRoleRequirement(new[] { OrgRoles.PlatformAdmin }, acceptLegacyAdmin: false, acceptGlobalAdmin: true)));
 });
 // Tenant scope is per-request, populated by TenantContextMiddleware.
 builder.Services.AddScoped<ITenantContext, TenantContext>();
@@ -225,6 +225,7 @@ var app = builder.Build();
     var activities = scope.ServiceProvider.GetRequiredService<IActivityService>();
 
     UserEntity? admin = null;
+    UserEntity? globalAdmin = null;
     if (seedDefaultAdmin)
     {
         admin = await users.FindByEmailOrUsernameAsync("admin@onepass.local");
@@ -246,6 +247,16 @@ var app = builder.Build();
                 app.Logger.LogWarning(
                     "Seed admin created with configured password (Bootstrap:DefaultAdminPassword). CHANGE IT before any public use.");
         }
+
+        // Seed a Global Admin account — the only role that can manage platform-wide
+        // settings. The fixed id "global-admin" makes it easy to locate in dev.
+        globalAdmin = await users.FindByEmailOrUsernameAsync("global-admin");
+        if (globalAdmin is null)
+        {
+            globalAdmin = await users.CreateAsync("globaladmin@onepass.local", "global-admin", "OnePass2026!", Roles.GlobalAdmin);
+            app.Logger.LogWarning(
+                "Seed global admin created: global-admin / OnePass2026! — CHANGE this credential before any public use.");
+        }
     }
 
     // Bootstrap the "default" SaaS organisation that wraps any pre-existing
@@ -256,7 +267,8 @@ var app = builder.Build();
     if (defaultOrg is null)
     {
         var ownerId = admin?.RowKey ?? "system";
-        defaultOrg = await orgs.CreateAsync("Default Organization", "default", ownerId);
+        var devOrgId = $"org-{Random.Shared.Next(1000, 10000)}";
+        defaultOrg = await orgs.CreateAsync("Default Organization", "default", ownerId, devOrgId);
         app.Logger.LogInformation("Default organisation created (slug=default, id={OrgId}).", defaultOrg.RowKey);
     }
     if (admin is not null)
@@ -268,6 +280,42 @@ var app = builder.Build();
         {
             admin.DefaultOrgId = defaultOrg.RowKey;
             await users.UpdateAsync(admin);
+        }
+    }
+
+    // Seed a regular user for development/testing
+    if (seedDefaultAdmin)
+    {
+        var user1 = await users.FindByEmailOrUsernameAsync("user1@onepass.local");
+        if (user1 is null)
+        {
+            var seedPassword = builder.Configuration["Bootstrap:DefaultAdminPassword"] ?? "OnePass2026!";
+            user1 = await users.CreateAsync("user1@onepass.local", "user1", seedPassword, Roles.User);
+            app.Logger.LogInformation("Seed user created: user1@onepass.local / user1");
+        }
+        var user1Membership = await memberships.GetAsync(defaultOrg.RowKey, user1.RowKey);
+        if (user1Membership is null)
+            await memberships.AddAsync(defaultOrg.RowKey, user1.RowKey, OrgRoles.Scanner);
+        if (string.IsNullOrEmpty(user1.DefaultOrgId))
+        {
+            user1.DefaultOrgId = defaultOrg.RowKey;
+            await users.UpdateAsync(user1);
+        }
+
+        var user2 = await users.FindByEmailOrUsernameAsync("user2@onepass.local");
+        if (user2 is null)
+        {
+            var seedPassword2 = builder.Configuration["Bootstrap:DefaultAdminPassword"] ?? "OnePass2026!";
+            user2 = await users.CreateAsync("user2@onepass.local", "user2", seedPassword2, Roles.User);
+            app.Logger.LogInformation("Seed user created: user2@onepass.local / user2");
+        }
+        var user2Membership = await memberships.GetAsync(defaultOrg.RowKey, user2.RowKey);
+        if (user2Membership is null)
+            await memberships.AddAsync(defaultOrg.RowKey, user2.RowKey, OrgRoles.Scanner);
+        if (string.IsNullOrEmpty(user2.DefaultOrgId))
+        {
+            user2.DefaultOrgId = defaultOrg.RowKey;
+            await users.UpdateAsync(user2);
         }
     }
 

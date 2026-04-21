@@ -16,16 +16,32 @@ interface UserDialogProps {
   /** Pass an existing user to edit, or null/undefined to create. */
   user?: AppUser | null;
   activities: Activity[];
+  /** All existing users — used to compute the next available user## username. */
+  existingUsers?: AppUser[];
   onSave: (data: UserDialogData) => void;
   onCancel: () => void;
 }
 
-export function UserDialog({ open, user, activities, onSave, onCancel }: UserDialogProps) {
+function nextUsername(existingUsers: AppUser[]): string {
+  const taken = new Set(
+    existingUsers
+      .map(u => u.username)
+      .filter(n => /^user\d{2}$/.test(n))
+      .map(n => parseInt(n.slice(4), 10)),
+  );
+  for (let i = 0; i <= 99; i++) {
+    if (!taken.has(i)) return `user${String(i).padStart(2, '0')}`;
+  }
+  return `user${existingUsers.length}`;
+}
+
+export function UserDialog({ open, user, activities, existingUsers = [], onSave, onCancel }: UserDialogProps) {
   const { t } = useTranslation();
   const emailRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [allowed, setAllowed] = useState<string[]>([]);
   const [defaultAct, setDefaultAct] = useState('');
+  const [autoUsername, setAutoUsername] = useState('');
 
   const isEdit = !!user;
 
@@ -35,14 +51,16 @@ export function UserDialog({ open, user, activities, onSave, onCancel }: UserDia
       if (user) {
         setAllowed(user.allowedActivityIds ?? activities.map(a => a.id));
         setDefaultAct(user.defaultActivityId ?? user.allowedActivityIds?.[0] ?? '');
+        setAutoUsername('');
       } else {
         setAllowed(activities.map(a => a.id));
         const def = activities.find(a => a.isDefault) ?? activities[0];
         setDefaultAct(def?.id ?? '');
+        setAutoUsername(nextUsername(existingUsers));
       }
       setTimeout(() => emailRef.current?.focus(), 50);
     }
-  }, [open, user, activities]);
+  }, [open, user, activities, existingUsers]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,7 +121,7 @@ export function UserDialog({ open, user, activities, onSave, onCancel }: UserDia
             </div>
             <div className="field">
               <label>{t('users.username')}</label>
-              <input name="username" defaultValue={user?.username ?? ''} required={!isEdit} disabled={isEdit} />
+              <input name="username" defaultValue={isEdit ? (user?.username ?? '') : autoUsername} key={isEdit ? user?.username : autoUsername} required={!isEdit} disabled={isEdit} />
             </div>
             {!isEdit && (
               <div className="field">

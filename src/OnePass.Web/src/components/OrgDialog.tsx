@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 export interface OrgDialogData {
   name: string;
+  orgId: string;
   slug: string;
 }
 
@@ -16,6 +17,8 @@ export function OrgDialog({ open, onSave, onCancel }: OrgDialogProps) {
   const { t } = useTranslation();
   const nameRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [orgId, setOrgId] = useState('');
+  const [orgIdTouched, setOrgIdTouched] = useState(false);
   const [slug, setSlug] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
 
@@ -24,9 +27,18 @@ export function OrgDialog({ open, onSave, onCancel }: OrgDialogProps) {
     return raw.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
 
+  /** Mirror the backend NormaliseOrgId: lowercase, non-alphanum → underscore, max 16 chars. */
+  function normaliseOrgId(raw: string): string {
+    let s = raw.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    if (s.length > 16) s = s.slice(0, 16).replace(/_+$/, '');
+    return s;
+  }
+
   useEffect(() => {
     if (open) {
       setError(null);
+      setOrgId('');
+      setOrgIdTouched(false);
       setSlug('');
       setSlugTouched(false);
       setTimeout(() => nameRef.current?.focus(), 50);
@@ -48,8 +60,9 @@ export function OrgDialog({ open, onSave, onCancel }: OrgDialogProps) {
     const form = new FormData(e.currentTarget);
     const name = String(form.get('name') ?? '').trim();
     if (!name) return;
+    const orgId = String(form.get('orgId') ?? '').trim();
     const slug = String(form.get('slug') ?? '').trim();
-    onSave({ name, slug });
+    onSave({ name, orgId, slug });
   }
 
   return (
@@ -69,11 +82,32 @@ export function OrgDialog({ open, onSave, onCancel }: OrgDialogProps) {
               name="name"
               required
               autoComplete="off"
-              onChange={e => { if (!slugTouched) setSlug(normaliseSlug(e.target.value)); }}
+              onChange={e => {
+                const derived = normaliseOrgId(e.target.value);
+                if (!orgIdTouched) setOrgId(derived);
+                if (!slugTouched) setSlug(normaliseSlug(orgIdTouched ? orgId : derived));
+              }}
             />
           </div>
           <div className="field">
-            <label>{t('wizard.org.slug', 'URL slug (optional)')}</label>
+            <label>{t('wizard.org.orgId', 'Organisation ID')}</label>
+            <input
+              name="orgId"
+              value={orgId}
+              onChange={e => {
+                setOrgIdTouched(true);
+                const v = normaliseOrgId(e.target.value);
+                setOrgId(v);
+                if (!slugTouched) setSlug(normaliseSlug(v));
+              }}
+              maxLength={16}
+              placeholder={t('wizard.org.orgIdPlaceholder', 'e.g. microsoft') as string}
+              pattern="[a-z0-9]+([_-][a-z0-9]+)*"
+            />
+            <small style={{ color: 'var(--muted)' }}>{t('wizard.org.orgIdHint', 'Max 16 chars, lowercase, digits, underscores and dashes only.')}</small>
+          </div>
+          <div className="field">
+            <label>{t('wizard.org.slug', 'URL slug')}</label>
             <input
               name="slug"
               value={slug}
@@ -81,7 +115,8 @@ export function OrgDialog({ open, onSave, onCancel }: OrgDialogProps) {
               placeholder={t('wizard.org.slugPlaceholder', 'e.g. microsoft') as string}
               pattern="[a-z0-9]+(-[a-z0-9]+)*"
             />
-            <small style={{ color: 'var(--muted)' }}>{t('wizard.org.slugHint', 'Lower-case, dashes only. Leave blank to derive it from the name.')}</small>
+            <small style={{ color: 'var(--muted)' }}>{t('wizard.org.slugHint', 'Auto-filled from Organisation ID. Lower-case, dashes only.')}</small>
+            <small className="field-tip" style={{ display: 'block', marginTop: '0.25rem', color: 'var(--muted)', fontStyle: 'italic' }} dangerouslySetInnerHTML={{ __html: t('wizard.org.slugTip', 'The slug appears in all public URLs for your organisation, e.g. https://onepass.app/<strong>microsoft</strong>/events.') }} />
           </div>
           <div className="form-actions">
             <button type="button" className="secondary" onClick={onCancel}>{t('common.cancel')}</button>

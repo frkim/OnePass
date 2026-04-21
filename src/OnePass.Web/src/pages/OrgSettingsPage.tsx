@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api, Organization } from '../api';
+import { api, Organization, Activity, EventInfo } from '../api';
 import { useOrg } from '../org';
 import { PageHeader, Spinner } from '../components/PageShell';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -19,9 +19,32 @@ export default function OrgSettingsPage() {
     title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void;
   } | null>(null);
 
+  const [events, setEvents] = useState<EventInfo[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [defaultEventId, setDefaultEventId] = useState<string>('');
+  const [defaultActivityId, setDefaultActivityId] = useState<string>('');
+
   useEffect(() => {
     if (!active?.id) return;
     api.getOrg(active.id).then(o => { setOrg(o); setName(o.name); setSlug(o.slug ?? ''); }).catch(() => { /* noop */ });
+  }, [active?.id]);
+
+  useEffect(() => {
+    if (!active?.id) return;
+    (async () => {
+      try {
+        const [evts, a, orgData] = await Promise.all([
+          api.listEvents(active.id),
+          api.listActivities(),
+          api.getOrg(active.id),
+        ]);
+        setEvents(evts);
+        setActivities(a);
+        setDefaultEventId(orgData.defaultEventId ?? '');
+        const liveEvent = evts.find(e => e.id === (orgData.defaultEventId ?? '')) ?? evts.find(e => !e.isArchived) ?? evts[0] ?? null;
+        setDefaultActivityId(liveEvent?.defaultActivityId ?? '');
+      } catch { /* noop */ }
+    })();
   }, [active?.id]);
 
   async function onRename(e: FormEvent) {
@@ -43,6 +66,24 @@ export default function OrgSettingsPage() {
       setName(next.name);
       setSlug(next.slug ?? '');
       await refresh(next.id);
+      toast.success(t('common.saved', 'Saved'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
+    } finally { setBusy(false); }
+  }
+
+  async function onSaveDefaults(e: FormEvent) {
+    e.preventDefault();
+    if (!active?.id) return;
+    setError(null); setBusy(true);
+    try {
+      await api.updateOrg(active.id, { defaultEventId: defaultEventId || null });
+      const targetEvent = events.find(ev => ev.id === defaultEventId);
+      if (targetEvent) {
+        await api.updateEvent(active.id, targetEvent.id, {
+          defaultActivityId: defaultActivityId || null,
+        });
+      }
       toast.success(t('common.saved', 'Saved'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'));
@@ -80,7 +121,11 @@ export default function OrgSettingsPage() {
         <h2>{t('orgSettings.identity', 'Identity')}</h2>
         <div className="grid">
           <div className="field">
-            <label>{t('orgSettings.name', 'Name')}</label>
+            <label>{t('orgSettings.orgId', 'Organisation ID')}</label>
+            <input value={org.id} readOnly disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+          </div>
+          <div className="field">
+            <label>{t('orgSettings.name', 'Display name')}</label>
             <input value={name} onChange={e => setName(e.target.value)} maxLength={120} required />
           </div>
           <div className="field">
@@ -92,6 +137,29 @@ export default function OrgSettingsPage() {
               {t('orgSettings.slugHelp', 'Used in URLs. Renaming generates a 301 redirect from the old slug.')}
             </small>
           </div>
+        </div>
+        <div className="form-actions">
+          <button type="submit" disabled={busy}>{t('common.save')}</button>
+        </div>
+      </form>
+
+      <form className="card" onSubmit={onSaveDefaults}>
+        <h2>{t('orgSettings.defaults', 'Defaults')}</h2>
+        <div className="field">
+          <label>{t('parameters.defaultEvent', 'Default event')}</label>
+          <select value={defaultEventId} onChange={e => setDefaultEventId(e.target.value)}>
+            <option value="">{t('parameters.none', 'None')}</option>
+            {events.filter(ev => !ev.isArchived).map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+          </select>
+          <small style={{ color: 'var(--muted)' }}>{t('parameters.defaultEventHelp', 'Pre-selected event for scanning and activities.')}</small>
+        </div>
+        <div className="field">
+          <label>{t('parameters.defaultActivity', 'Default activity')}</label>
+          <select value={defaultActivityId} onChange={e => setDefaultActivityId(e.target.value)}>
+            <option value="">{t('parameters.none', 'None')}</option>
+            {activities.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+          <small style={{ color: 'var(--muted)' }}>{t('parameters.defaultActivityHelp', 'Pre-selected on the Scan page when a user has not chosen their own default.')}</small>
         </div>
         <div className="form-actions">
           <button type="submit" disabled={busy}>{t('common.save')}</button>

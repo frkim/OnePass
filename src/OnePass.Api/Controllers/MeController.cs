@@ -93,6 +93,10 @@ public class MeController : ControllerBase
     {
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var me = await _users.GetByIdAsync(userId, ct);
+        if (me is null) return NotFound();
+
         var ms = await _memberships.ListForUserAsync(userId, ct);
 
         // Last OrgOwner blocks deletion to avoid orphaning a tenant.
@@ -101,6 +105,20 @@ public class MeController : ControllerBase
             var siblings = await _memberships.ListForOrgAsync(m.OrgId, ct);
             if (siblings.Count(s => s.Role == OnePass.Api.Models.OrgRoles.OrgOwner && s.UserId != userId) == 0)
                 return Conflict(new { code = "last_owner", error = $"Transfer ownership of org '{m.OrgId}' before deleting your account." });
+        }
+
+        // Last Admin in an org blocks deletion.
+        if (me.Role == OnePass.Api.Models.Roles.Admin)
+        {
+            foreach (var m in ms)
+            {
+                var orgMembers = await _memberships.ListForOrgAsync(m.OrgId, ct);
+                var memberUserIds = orgMembers.Select(x => x.UserId).ToHashSet(StringComparer.Ordinal);
+                var allUsers = await _users.ListAsync(ct);
+                var otherAdmins = allUsers.Count(u => u.Role == OnePass.Api.Models.Roles.Admin && u.RowKey != userId && memberUserIds.Contains(u.RowKey));
+                if (otherAdmins == 0)
+                    return Conflict(new { code = "last_admin", error = $"Cannot delete your account — you are the last admin in organisation '{m.OrgId}'." });
+            }
         }
 
         foreach (var m in ms)

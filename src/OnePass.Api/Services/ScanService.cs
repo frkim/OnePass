@@ -68,6 +68,8 @@ public sealed class ScanService : IScanService
                 PartitionKey = activityId,
                 RowKey = participantId,
                 DisplayName = participantId,
+                OrgId = activity.OrgId,
+                EventId = activity.EventId,
             };
             await _participants.UpsertAsync(participant, ct);
         }
@@ -88,6 +90,8 @@ public sealed class ScanService : IScanService
             ParticipantId = participant.RowKey,
             ScannedByUserId = scannedByUserId,
             ScannedAt = now,
+            OrgId = activity.OrgId,
+            EventId = activity.EventId,
         };
         await _scans.UpsertAsync(scan, ct);
         return scan;

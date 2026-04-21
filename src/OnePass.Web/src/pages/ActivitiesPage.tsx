@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api, Activity } from '../api';
+import { api, Activity, EventInfo } from '../api';
 import { useAuth } from '../auth';
 import { useOrg } from '../org';
 import { formatDate } from '../i18n';
@@ -15,6 +15,7 @@ export default function ActivitiesPage() {
   const { active } = useOrg();
   const toast = useToast();
   const [list, setList] = useState<Activity[]>([]);
+  const [events, setEvents] = useState<EventInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ mode: 'add' | 'edit'; activity?: Activity } | null>(null);
@@ -38,7 +39,10 @@ export default function ActivitiesPage() {
       .then(setList)
       .catch(() => setError(t('common.error')))
       .finally(() => setLoading(false));
-  }, [t]);
+    if (active?.id) {
+      api.listEvents(active.id).then(setEvents).catch(() => {});
+    }
+  }, [t, active]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -74,6 +78,7 @@ export default function ActivitiesPage() {
               startsAt: data.startsAt,
               endsAt: data.endsAt,
               maxScansPerParticipant: data.maxScansPerParticipant,
+              eventId: data.eventId,
             });
             setDialog(null);
             toast.success(t('common.saved', 'Saved'));
@@ -216,6 +221,7 @@ export default function ActivitiesPage() {
         open={!!dialog}
         activity={dialog?.mode === 'edit' ? dialog.activity : null}
         existingNames={list.map(a => a.name)}
+        events={events}
         onSave={onDialogSave}
         onCancel={() => setDialog(null)}
       />

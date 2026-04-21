@@ -24,11 +24,14 @@ internal sealed class OrgRoleRequirement : IAuthorizationRequirement
     public IReadOnlyList<string> AllowedRoles { get; }
     /// <summary>If true, the legacy global <c>Admin</c> role also satisfies this requirement.</summary>
     public bool AcceptLegacyAdmin { get; }
+    /// <summary>If true, the <c>GlobalAdmin</c> role also satisfies this requirement.</summary>
+    public bool AcceptGlobalAdmin { get; }
 
-    public OrgRoleRequirement(IReadOnlyList<string> allowedRoles, bool acceptLegacyAdmin)
+    public OrgRoleRequirement(IReadOnlyList<string> allowedRoles, bool acceptLegacyAdmin, bool acceptGlobalAdmin = false)
     {
         AllowedRoles = allowedRoles;
         AcceptLegacyAdmin = acceptLegacyAdmin;
+        AcceptGlobalAdmin = acceptGlobalAdmin;
     }
 }
 
@@ -41,6 +44,12 @@ internal sealed class OrgRoleHandler : AuthorizationHandler<OrgRoleRequirement>
     {
         if (context.User?.Identity?.IsAuthenticated != true)
             return Task.CompletedTask;
+
+        if (requirement.AcceptGlobalAdmin && context.User.IsInRole(Roles.GlobalAdmin))
+        {
+            context.Succeed(requirement);
+            return Task.CompletedTask;
+        }
 
         if (requirement.AcceptLegacyAdmin && context.User.IsInRole(Roles.Admin))
         {

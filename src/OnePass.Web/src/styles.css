@@ -73,6 +73,30 @@ label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 
 }
 .app-header-nav a.active, .app-header-nav a:hover { background: #eef2ff; color: var(--brand); text-decoration: none; }
 
+/* Nav menu (hamburger dropdown — GitHub-style) */
+.nav-menu { position: relative; }
+.nav-menu-trigger {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0;
+  background: transparent; border: 1px solid var(--border, #d1d5db);
+  border-radius: 6px; cursor: pointer; color: var(--text);
+}
+.nav-menu-trigger svg { display: block; }
+.nav-menu-trigger:hover { background: #f3f4f6; }
+.nav-menu-trigger[aria-expanded="true"] { background: #f3f4f6; }
+.nav-menu-panel {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  min-width: 14rem; background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.10); padding: 0.35rem; z-index: 50;
+  display: flex; flex-direction: column;
+}
+.nav-menu-panel a {
+  display: block; padding: 0.5rem 0.75rem; border-radius: 6px;
+  color: var(--text); font-weight: 500; text-decoration: none;
+}
+.nav-menu-panel a:hover { background: #f3f4f6; text-decoration: none; }
+.nav-menu-panel a.active { background: #eef2ff; color: var(--brand); }
+
 /* Active org/event chip */
 .org-chip {
   display: inline-flex; align-items: baseline; gap: 0.4rem;
@@ -205,6 +229,19 @@ th { color: var(--muted); font-weight: 600; }
 .login-wrapper {
   display: flex; min-height: 100vh; align-items: center; justify-content: center;
   padding: 1rem; background: linear-gradient(135deg, #eef2ff 0%, #f7f8fb 100%);
+  position: relative;
+}
+
+/* GitHub Corner — subtle Octocat ribbon */
+.github-corner { position: absolute; top: 0; right: 0; z-index: 10; opacity: 0.18; transition: opacity 0.3s; }
+.github-corner:hover { opacity: 0.6; }
+.github-corner svg { fill: #24292f; color: #fff; }
+.github-corner .octo-arm { transform-origin: 130px 106px; }
+.github-corner:hover .octo-arm { animation: octocat-wave 560ms ease-in-out; }
+@keyframes octocat-wave {
+  0%, 100% { transform: rotate(0); }
+  20%, 60% { transform: rotate(-25deg); }
+  40%, 80% { transform: rotate(10deg); }
 }
 .login-pair {
   display: flex; align-items: stretch; gap: 2rem;
@@ -297,7 +334,7 @@ th { color: var(--muted); font-weight: 600; }
 .modal-subtitle { margin: 0 0 0.75rem; color: #475569; font-weight: 500; }
 .modal-lead { margin: 0 0 1rem; color: #475569; }
 .modal-footer {
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;
   margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;
 }
 .modal-footer .link-button {

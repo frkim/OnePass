@@ -75,7 +75,7 @@ export default function OrgInvitationsPage() {
       {error && <div className="alert error">{error}</div>}
 
       <form className="card" onSubmit={onInvite}>
-        <h2>{t('invitations.send', 'Create invitation')}</h2>
+        <h2>{t('invitations.send', 'Send invitation')}</h2>
         <div className="grid">
           <div className="field">
             <label>{t('invitations.email', 'Email')}</label>
@@ -89,7 +89,7 @@ export default function OrgInvitationsPage() {
           </div>
         </div>
         <div className="form-actions">
-          <button type="submit">{t('invitations.send', 'Create invitation')}</button>
+          <button type="submit">{t('invitations.send', 'Send invitation')}</button>
         </div>
       </form>
 

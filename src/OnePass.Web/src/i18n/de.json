@@ -5,12 +5,14 @@
     "language": "Sprache"
   },
   "nav": {
+    "menu": "Menü",
     "dashboard": "Dashboard",
     "activities": "Aktivitäten",
-    "scan": "Scannen",
+    "events": "Veranstaltungen",
+    "scan": "Badge-Scanner",
     "users": "Benutzer",
-    "parameters": "Einstellungen",
-    "profile": "Profil",
+    "parameters": "Meine Einstellungen",
+    "profile": "Mein Profil",
     "help": "Hilfe",
     "setupWizard": "Einrichtungsassistent",
     "globalAdmin": "Global-Administration",
@@ -36,6 +38,7 @@
     "accountDisabled": "Dieses Konto wurde deaktiviert.",
     "showPassword": "Passwort anzeigen",
     "hidePassword": "Passwort verbergen",
+    "forgotPassword": "Passwort vergessen?",
     "marketingTitle": "Willkommen bei OnePass",
     "marketingDesc": "OnePass ist die All-in-One-Plattform für Badge-Scanning und Aktivitätsverfolgung bei Präsenzveranstaltungen. Erstellen Sie Aktivitäten, laden Sie Ihr Team ein, scannen Sie Teilnehmer — und erhalten Sie Echtzeitanalysen, CSV-Exporte und eine offline-fähige Progressive Web App.",
     "marketingFeature1": "Echtzeit-Scan-Tracking und Dashboards",
@@ -65,8 +68,28 @@
     "passwordUppercase": "Mindestens ein Großbuchstabe",
     "passwordSpecialChar": "Mindestens ein Sonderzeichen"
   },
+  "forgotPassword": {
+    "title": "Passwort vergessen",
+    "description": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.",
+    "email": "E-Mail",
+    "submit": "Link senden",
+    "sent": "Falls diese E-Mail registriert ist, wurde ein Link zum Zurücksetzen gesendet. Prüfen Sie Ihren Posteingang (oder die API-Konsole im Dev-Modus).",
+    "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "resetPassword": {
+    "title": "Passwort zurücksetzen",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Neues Passwort bestätigen",
+    "submit": "Passwort zurücksetzen",
+    "success": "Ihr Passwort wurde erfolgreich zurückgesetzt.",
+    "error": "Zurücksetzen fehlgeschlagen. Der Link ist möglicherweise abgelaufen.",
+    "missingToken": "Ungültiger Link. Bitte fordern Sie einen neuen an.",
+    "requestNew": "Neuen Link anfordern",
+    "goToLogin": "Mit Ihrem neuen Passwort anmelden"
+  },
   "dashboard": {
-    "title": "Admin-Dashboard",
+    "title": "Scan-Dashboard",
     "totalActivities": "Aktivitäten insgesamt",
     "totalScans": "Scans insgesamt",
     "uniqueParticipants": "Eindeutige Teilnehmer",
@@ -83,7 +106,7 @@
     "limitMaxScans": "Max. Scans pro Teilnehmer begrenzen",
     "unlimited": "Unbegrenzt",
     "create": "Aktivität erstellen",
-    "participants": "Teilnehmer",
+    "participants": "Scan-Verlauf",
     "addParticipant": "Teilnehmer hinzufügen",
     "displayName": "Anzeigename",
     "email": "E-Mail (optional)",
@@ -99,10 +122,13 @@
     "edit": "Bearbeiten",
     "rename": "Umbenennen",
     "renameTitle": "Aktivität umbenennen",
-    "renameNewName": "Neuer Name"
+    "renameNewName": "Neuer Name",
+    "event": "Veranstaltung",
+    "selectEvent": "Veranstaltung auswählen…",
+    "eventRequired": "Eine Veranstaltung muss ausgewählt werden."
   },
   "scan": {
-    "title": "Teilnehmer scannen",
+    "title": "Badge-Scanner",
     "chooseActivity": "Aktivität wählen",
     "participantId": "Teilnehmer-ID (QR)",
     "submit": "Scan manuell erfassen",
@@ -122,6 +148,7 @@
   },
   "users": {
     "title": "Benutzer",
+    "add": "Benutzer hinzufügen",
     "create": "Benutzer erstellen",
     "email": "E-Mail",
     "username": "Benutzername",
@@ -135,23 +162,44 @@
     "disable": "Deaktivieren",
     "allowedActivities": "Erlaubte Aktivitäten",
     "defaultActivity": "Standardaktivität",
-    "selectAtLeastOneActivity": "Mindestens eine Aktivität auswählen"
+    "selectAtLeastOneActivity": "Mindestens eine Aktivität auswählen",
+    "resetPassword": "Passwort zurücksetzen",
+    "resetPasswordFor": "Neues Passwort für {{username}} festlegen.",
+    "newPassword": "Neues Passwort",
+    "resetPasswordSuccess": "Passwort zurückgesetzt für {{username}}"
   },
   "parameters": {
-    "title": "Einstellungen",
-    "eventName": "Veranstaltungsname",
-    "eventNameHelp": "Öffentlich sichtbarer Name in der gesamten Anwendung.",
+    "title": "Meine Einstellungen",
+    "defaultEvent": "Standardveranstaltung",
+    "defaultEventHelp": "Vorausgewählte Veranstaltung für Scan und Aktivitäten.",
     "defaultActivity": "Standardaktivität",
     "defaultActivityHelp": "Auf der Scan-Seite vorausgewählt, wenn keine eigene festgelegt ist.",
+    "myDefaults": "Meine Standards",
+    "myDefaultEvent": "Meine Standardveranstaltung",
+    "myDefaultEventHelp": "Überschreibt die Organisations-Standardveranstaltung für Ihr Konto.",
     "myDefaultActivity": "Meine Standardaktivität",
-    "myDefaultActivityHelp": "Überschreibt den globalen Standard für Ihr Konto.",
+    "myDefaultActivityHelp": "Überschreibt die globale Standardaktivität für Ihr Konto.",
     "saved": "Gespeichert.",
     "none": "Keine"
+  },
+  "orgSettings": {
+    "title": "Organisationseinstellungen",
+    "identity": "Identität",
+    "defaults": "Standardwerte",
+    "name": "Anzeigename",
+    "slug": "Slug",
+    "slugPattern": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
+    "slugHelp": "Wird in URLs verwendet. Umbenennung erzeugt eine 301-Weiterleitung vom alten Slug.",
+    "danger": "Gefahrenzone",
+    "dangerHelp": "Das Löschen dieser Organisation entfernt alle Mitglieder, Veranstaltungen und Scans. Dies kann nicht rückgängig gemacht werden.",
+    "delete": "Organisation löschen",
+    "confirmDelete": "Dies löscht die Organisation und alle zugehörigen Veranstaltungen, Scans und Mitglieder dauerhaft. Fortfahren?"
   },
   "common": {
     "save": "Speichern",
     "saved": "Gespeichert",
     "cancel": "Abbrechen",
+    "close": "Schließen",
     "confirm": "Bestätigen",
     "remove": "Entfernen",
     "loading": "Laden…",
@@ -170,7 +218,8 @@
     "previous": "Zurück",
     "next": "Weiter",
     "pageOf": "Seite {{page}} von {{total}}",
-    "activity": "Aktivität"
+    "activity": "Aktivität",
+    "scannedBy": "Benutzer"
   },
   "globalAdmin": {
     "title": "Globale Verwaltung",
@@ -204,6 +253,27 @@
     "suspend": "Sperren",
     "reactivate": "Reaktivieren",
     "confirmStatus": "Diese Organisation auf den Status \"{{status}}\" setzen?"
+  },
+  "event": {
+    "name": "Name",
+    "slug": "Slug",
+    "slugHint": "Kleinbuchstaben und Bindestriche. Leer lassen, um aus dem Namen abzuleiten.",
+    "description": "Beschreibung",
+    "venue": "Veranstaltungsort",
+    "startsAt": "Beginn",
+    "endsAt": "Ende",
+    "status": "Status",
+    "create": "Veranstaltung erstellen",
+    "edit": "Veranstaltung bearbeiten",
+    "add": "Veranstaltung hinzufügen",
+    "confirmCreate": "Veranstaltung \"{{name}}\" erstellen?",
+    "duplicateName": "Eine Veranstaltung mit diesem Namen existiert bereits.",
+    "archive": "Archivieren",
+    "unarchive": "Dearchivieren",
+    "archived": "Veranstaltung archiviert.",
+    "unarchived": "Veranstaltung dearchiviert.",
+    "liveLabel": "Aktiv",
+    "archivedLabel": "Archiviert"
   },
   "wizard": {
     "title": "Willkommen bei OnePass",

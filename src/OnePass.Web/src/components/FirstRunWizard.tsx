@@ -32,7 +32,21 @@ export function FirstRunWizard({ onClose }: FirstRunWizardProps) {
 
   // Step 1 — Organisation
   const [orgName, setOrgName] = useState('');
+  const [orgId, setOrgId] = useState('');
+  const [orgIdTouched, setOrgIdTouched] = useState(false);
   const [orgSlug, setOrgSlug] = useState('');
+  const [orgSlugTouched, setOrgSlugTouched] = useState(false);
+
+  /** Mirror the backend NormaliseOrgId: lowercase, non-alphanum → underscore, max 16 chars. */
+  function normaliseOrgId(raw: string): string {
+    let s = raw.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    if (s.length > 16) s = s.slice(0, 16).replace(/_+$/, '');
+    return s;
+  }
+
+  function normaliseSlug(raw: string): string {
+    return raw.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
 
   // Step 2 — Event
   const today = new Date();
@@ -83,6 +97,7 @@ export function FirstRunWizard({ onClose }: FirstRunWizardProps) {
       const org = await api.createOrg(
         orgName.trim(),
         orgSlug.trim() || undefined,
+        orgId.trim() || undefined,
       );
       // Switch the active-org context up front so the activity creation
       // below (which is org-scoped via the X-Active-Org header) lands in
@@ -160,7 +175,12 @@ export function FirstRunWizard({ onClose }: FirstRunWizardProps) {
                 <input
                   id="w-org-name"
                   value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
+                  onChange={(e) => {
+                    setOrgName(e.target.value);
+                    const derived = normaliseOrgId(e.target.value);
+                    if (!orgIdTouched) setOrgId(derived);
+                    if (!orgSlugTouched) setOrgSlug(normaliseSlug(orgIdTouched ? orgId : derived));
+                  }}
                   required
                   autoFocus
                   maxLength={120}
@@ -168,15 +188,32 @@ export function FirstRunWizard({ onClose }: FirstRunWizardProps) {
                 />
               </div>
               <div className="field">
+                <label htmlFor="w-org-id">{t('wizard.org.orgId', 'Organisation ID')}</label>
+                <input
+                  id="w-org-id"
+                  value={orgId}
+                  onChange={(e) => {
+                    setOrgIdTouched(true);
+                    const v = normaliseOrgId(e.target.value);
+                    setOrgId(v);
+                    if (!orgSlugTouched) setOrgSlug(normaliseSlug(v));
+                  }}
+                  maxLength={16}
+                  placeholder={t('wizard.org.orgIdPlaceholder', 'e.g. microsoft') as string}
+                />
+                <small className="field-hint">{t('wizard.org.orgIdHint', 'Max 16 chars, lowercase, digits, underscores and dashes only.')}</small>
+              </div>
+              <div className="field">
                 <label htmlFor="w-org-slug">{t('wizard.org.slug')}</label>
                 <input
                   id="w-org-slug"
                   value={orgSlug}
-                  onChange={(e) => setOrgSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                  onChange={(e) => { setOrgSlugTouched(true); setOrgSlug(normaliseSlug(e.target.value)); }}
                   maxLength={64}
                   placeholder={t('wizard.org.slugPlaceholder') as string}
                 />
-                <small className="field-hint">{t('wizard.org.slugHint')}</small>
+                <small className="field-hint">{t('wizard.org.slugHintAuto', 'Auto-filled from Organisation ID. Lower-case, dashes only.')}</small>
+                <small className="field-tip" style={{ display: 'block', marginTop: '0.25rem', fontStyle: 'italic' }} dangerouslySetInnerHTML={{ __html: t('wizard.org.slugTip', 'The slug appears in all public URLs for your organisation, e.g. https://onepass.app/<strong>microsoft</strong>/events.') }} />
               </div>
             </>
           )}

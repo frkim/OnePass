@@ -36,6 +36,8 @@ public class UserEntity : IEntity
     /// when pre-selecting an activity on the Scan page.
     /// </summary>
     public string? DefaultActivityId { get; set; }
+    /// <summary>User-chosen default event override.</summary>
+    public string? DefaultEventId { get; set; }
 
     // ---- SaaS additions (Phase 1) ----
 
@@ -60,6 +62,17 @@ public class UserEntity : IEntity
     /// and from per-org <see cref="MembershipEntity.Status"/>.
     /// </summary>
     public bool IsLocked { get; set; }
+
+    // ---- Password reset ----
+
+    /// <summary>
+    /// Opaque token emitted by the forgot-password flow. Stored hashed
+    /// (SHA-256) so a database leak does not grant password-reset access.
+    /// </summary>
+    public string? PasswordResetTokenHash { get; set; }
+
+    /// <summary>When the reset token expires (UTC). Null when no reset is pending.</summary>
+    public DateTimeOffset? PasswordResetTokenExpiry { get; set; }
 }
 
 /// <summary>A federated identity link from a CIAM provider.</summary>
